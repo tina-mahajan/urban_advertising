@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:urban_application/core/theme.dart';
-import 'package:urban_application/home/payment_screen.dart';
+import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/home/payment_screen.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});

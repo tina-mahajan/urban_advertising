@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:urban_application/core/theme.dart';
-import 'package:urban_application/home/home_screen.dart';
+import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/home/home_screen.dart';
 
 class SuccessScreen extends StatelessWidget {
   const SuccessScreen({super.key});

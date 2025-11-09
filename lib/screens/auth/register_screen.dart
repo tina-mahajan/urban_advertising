@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:urban_application/core/theme.dart';
-import 'package:urban_application/screens/auth/login_screen.dart';
+import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/screens/auth/login_screen.dart';
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});

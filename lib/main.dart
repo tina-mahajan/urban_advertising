@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:urban_application/core/theme.dart';
-import 'package:urban_application/screens/auth/login_screen.dart';
-import 'package:urban_application/screens/auth/register_screen.dart';
-import 'package:urban_application/home/home_screen.dart';
-import 'package:urban_application/home/subscription_screen.dart';
-import 'package:urban_application/home/payment_screen.dart';
-import 'package:urban_application/home/success_screen.dart';
-import 'package:urban_application/profile/profile_screen.dart';
-import 'package:urban_application/profile/edit_profile_screen.dart';
-import 'package:urban_application/bookings/bookings_screen.dart';
-import 'package:urban_application/bookings/booking_success_screen.dart';
-import 'package:urban_application/bookings/cancel_booking_screen.dart';
-import 'package:urban_application/bookings/slot_booking_screen.dart';
+import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/screens/auth/login_screen.dart';
+import 'package:urban_advertising/screens/auth/register_screen.dart';
+import 'package:urban_advertising/home/home_screen.dart';
+import 'package:urban_advertising/home/subscription_screen.dart';
+import 'package:urban_advertising/home/payment_screen.dart';
+import 'package:urban_advertising/home/success_screen.dart';
+import 'package:urban_advertising/profile/profile_screen.dart';
+import 'package:urban_advertising/profile/edit_profile_screen.dart';
+import 'package:urban_advertising/bookings/bookings_screen.dart';
+import 'package:urban_advertising/bookings/booking_success_screen.dart'; // Make sure this file exists and contains the class
+import 'package:urban_advertising/bookings/cancel_booking_screen.dart';
+import 'package:urban_advertising/bookings/slot_booking_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +34,8 @@ class MyApp extends StatelessWidget {
       // All app routes
       routes: {
         '/login': (context) => const LoginScreen(),
+        // Note: '/register' is imported but missing here. Consider adding:
+        // '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
         '/payment': (context) => const PaymentScreen(
@@ -45,7 +47,28 @@ class MyApp extends StatelessWidget {
         '/editProfile': (context) => const EditProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
         '/slot_booking': (context) => const SlotBookingScreen(),
-        '/booking_success': (context) => const BookingSuccessScreen(),
+
+        // ✅ FIXED: Route handler to read and pass runtime arguments
+        '/booking_success': (context) {
+          // 1. Retrieve arguments from the route settings
+          final args = ModalRoute.of(context)?.settings.arguments;
+
+          // 2. Check and safely cast the arguments (expecting a Map<String, dynamic>)
+          if (args is Map<String, dynamic> && args.containsKey('time') && args.containsKey('date')) {
+            // 3. Return the screen, passing the required runtime arguments
+            return BookingSuccessScreen(
+              bookedTime: args['time'] as String,
+              bookedDate: args['date'] as DateTime,
+            );
+          }
+
+          // 4. Fallback in case of an error or missing arguments
+          return BookingSuccessScreen(
+            bookedTime: 'Error loading time',
+            bookedDate: DateTime.now(),
+          );
+        },
+
         '/cancel_booking': (context) => const CancelBookingScreen(),
 
       },

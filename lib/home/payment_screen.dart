@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:urban_application/core/theme.dart';
+import 'package:urban_advertising/core/theme.dart';
 
 class PaymentScreen extends StatelessWidget {
   final String planName;

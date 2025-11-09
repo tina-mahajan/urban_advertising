@@ -1,4 +1,5 @@
-name: urban_application
+name: urban_advertising
+
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,6 +31,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.18.1
   carousel_slider: ^5.1.1
   table_calendar: ^3.0.9
 
