@@ -40,14 +40,14 @@ class CustomBottomNavBar extends StatelessWidget {
 // --- END Placeholder Classes ---
 
 
-class BookingConfirmationScreen extends StatelessWidget {
+class BookingSuccessScreen extends StatelessWidget {
   // This screen will likely receive the booked slot details as arguments.
   // For demonstration, let's assume it receives the 'time' as a String
   // and 'date' as a DateTime.
   final String bookedTime;
   final DateTime bookedDate;
 
-  const BookingConfirmationScreen({
+  const BookingSuccessScreen({
     super.key,
     required this.bookedTime,
     required this.bookedDate,
