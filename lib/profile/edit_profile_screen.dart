@@ -46,8 +46,13 @@ class EditProfileScreen extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 children: [
                   const CircleAvatar(
-                    radius: 50,
-                    backgroundImage: AssetImage('assets/banner1.jpg'),
+                    radius: 35,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person,
+                      color: Colors.black,
+                      size: 38,
+                    ),
                   ),
                   Container(
                     decoration: const BoxDecoration(

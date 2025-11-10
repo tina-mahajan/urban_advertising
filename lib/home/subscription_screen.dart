@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:urban_advertising/home/payment_screen.dart';
+import '../widgets/bottom_navbar.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -11,6 +12,7 @@ class SubscriptionScreen extends StatefulWidget {
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   int? hoveredIndex;
+  int currentIndex = 2; // Plans tab selected by default
 
   final plans = [
     {
@@ -30,7 +32,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         {'text': '15 video shoots', 'highlight': true},
         {'text': 'Professional editing'},
         {'text': '3 revision per video', 'highlight': true},
-        {'text': '2 changes allowed after delivery per video', 'highlight': true},
+        {
+          'text': '2 changes allowed after delivery per video',
+          'highlight': true,
+        },
         {'text': 'Social media posting support'},
         {'text': 'Logo generation (if required)'},
       ],
@@ -52,6 +57,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       ],
     },
   ];
+
+  void onTap(int index) {
+    setState(() {
+      currentIndex = index;
+    });
+
+    // Navigate to different screens based on index
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/slot_booking');
+        break;
+      case 2:
+        // Already on Plans screen
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +108,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 100, left: 16, right: 16, bottom: 30),
+          padding: const EdgeInsets.only(
+            top: 100,
+            left: 16,
+            right: 16,
+            bottom: 30,
+          ),
           child: Column(
             children: List.generate(plans.length, (index) {
               final plan = plans[index];
@@ -107,7 +139,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.4),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: hoveredIndex == index
@@ -121,7 +156,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ),
                     child: Stack(
                       children: [
-                        // Frosted glass effect
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: BackdropFilter(
@@ -131,8 +165,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                           ),
                         ),
-
-                        // Neon accent line
                         Positioned(
                           top: 0,
                           left: 0,
@@ -149,8 +181,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                           ),
                         ),
-
-                        // Main Content
                         InkWell(
                           borderRadius: BorderRadius.circular(20),
                           onTap: () {
@@ -173,9 +203,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                   children: [
                                     AnimatedRotation(
                                       turns: hoveredIndex == index ? 0.1 : 0.0,
-                                      duration: const Duration(milliseconds: 300),
-                                      child: const Icon(Icons.star_border_outlined,
-                                          color: Colors.white, size: 24),
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      child: const Icon(
+                                        Icons.star_border_outlined,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
@@ -204,20 +239,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 AnimatedOpacity(
                                   duration: const Duration(milliseconds: 300),
                                   opacity: hoveredIndex == index ? 1 : 0.5,
-                                  child: const Divider(color: Colors.white24, height: 20),
+                                  child: const Divider(
+                                    color: Colors.white24,
+                                    height: 20,
+                                  ),
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children:
-                                  (plan['features'] as List).map((feature) {
+                                  children: (plan['features'] as List).map((
+                                    feature,
+                                  ) {
                                     final f = feature as Map<String, dynamic>;
                                     return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(Icons.check,
-                                              color: Colors.white, size: 18),
+                                          const Icon(
+                                            Icons.check,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -249,21 +294,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                           MaterialPageRoute(
                                             builder: (context) => PaymentScreen(
                                               planName: plan['title'] as String,
-                                              planPrice: plan['price'] as String,
+                                              planPrice:
+                                                  plan['price'] as String,
                                             ),
                                           ),
                                         );
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: Colors.white),
+                                        side: const BorderSide(
+                                          color: Colors.white,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
                                         ),
                                         backgroundColor: hoveredIndex == index
                                             ? Colors.white12
                                             : Colors.transparent,
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: 12, horizontal: 30),
+                                          vertical: 12,
+                                          horizontal: 30,
+                                        ),
                                       ),
                                       child: const Text(
                                         'Upgrade Now',
@@ -289,6 +341,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             }),
           ),
         ),
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
       ),
     );
   }

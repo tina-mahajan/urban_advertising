@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../widgets/bottom_navbar.dart'; // Import your CustomBottomNavBar
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  int currentIndex = 3; // Profile tab selected by default (assuming Settings is under Profile)
+
+  void onTap(int index) {
+    setState(() {
+      currentIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/slot_booking');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/plans');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +49,7 @@ class SettingsScreen extends StatelessWidget {
             leading: const Icon(Icons.lock_outline, color: AppColors.textLight),
             title: const Text(
               'Change Password',
-              style: TextStyle(color: AppColors.textLight), // ✅ textLight color applied
+              style: TextStyle(color: AppColors.textLight),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -31,8 +60,9 @@ class SettingsScreen extends StatelessWidget {
 
           ListTile(
             leading: const Icon(Icons.notifications_none, color: AppColors.textLight),
-            title: const Text('Notifications',
-            style: TextStyle(color: AppColors.textLight),
+            title: const Text(
+              'Notifications',
+              style: TextStyle(color: AppColors.textLight),
             ),
             trailing: Switch(
               value: true,
@@ -46,8 +76,9 @@ class SettingsScreen extends StatelessWidget {
 
           ListTile(
             leading: const Icon(Icons.language, color: AppColors.textLight),
-            title: const Text('Language',
-            style: TextStyle(color: AppColors.textLight),
+            title: const Text(
+              'Language',
+              style: TextStyle(color: AppColors.textLight),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -58,8 +89,9 @@ class SettingsScreen extends StatelessWidget {
 
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.textLight),
-            title: const Text('Privacy Policy',
-            style: TextStyle(color: AppColors.textLight),
+            title: const Text(
+              'Privacy Policy',
+              style: TextStyle(color: AppColors.textLight),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -70,8 +102,9 @@ class SettingsScreen extends StatelessWidget {
 
           ListTile(
             leading: const Icon(Icons.info_outline, color: AppColors.textLight),
-            title: const Text('About Us',
-            style: TextStyle(color: AppColors.textLight),
+            title: const Text(
+              'About Us',
+              style: TextStyle(color: AppColors.textLight),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -96,6 +129,10 @@ class SettingsScreen extends StatelessWidget {
             label: const Text('Logout'),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
       ),
     );
   }
