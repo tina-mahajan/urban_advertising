@@ -18,8 +18,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ CRITICAL FIX: The structure must only return the BottomNavigationBar,
-    // and its 'items' list must contain only BottomNavigationBarItem widgets.
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
