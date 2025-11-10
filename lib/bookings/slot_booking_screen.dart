@@ -350,21 +350,12 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
       // FIX: The CustomBottomNavBar widget is called here correctly,
       // and the navigation logic is placed inside the onTap callback.
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 1,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/home'); // 🏠 Home
-              break;
-            case 1:
-              break; // Booking (Current page)
-            case 2:
-              Navigator.pushNamed(context, '/subscription'); // 📑 Plans
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/profile'); // 👤 Profile
-              break;
-          }
+        currentIndex: 1, // <-- 1 because this is the "Slot Booking" tab
+        onTap: (i) {
+          if (i == 0) Navigator.pushNamed(context, '/home');
+          if (i == 1) return; // Already on Booking page
+          if (i == 2) Navigator.pushNamed(context, '/subscription');
+          if (i == 3) Navigator.pushNamed(context, '/profile');
         },
       ),
     );
