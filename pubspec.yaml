@@ -59,9 +59,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/banner1.jpg
+    - assets/city2.jpg
     - assets/banner2.jpg
-    - assets/banner3.jpg
+    - assets/banner4.jpg
 
 
   # To add assets to your application, add an assets section, like this:
