@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
-// Assuming these are in your project structure or use the placeholders
+import 'package:intl/intl.dart';
+// Assuming these are in your project structure
 import 'package:urban_advertising/core/theme.dart';
 import 'package:urban_advertising/widgets/bottom_navbar.dart';
 
-// --- Placeholder Classes (REMOVE if you have these defined globally) ---
-// If you have your AppColors and CustomBottomNavBar already,
-// you do NOT need these placeholder definitions.
-
+// --- Placeholder Classes (Essential for correct coloring) ---
+// Please ensure AppColors and CustomBottomNavBar use these or similar definitions in your project files.
 class AppColors {
-  static const Color background = Color(0xFFF0F0F0); // Light grey background
-  static const Color primaryBlue = Color(0xFF0C2B4E); // Your primary blue
-  static const Color successGreen = Color(0xFF4CAF50); // A bright green for success
+  static const Color backgroundLight = Color(0xFFF0F0F0); // Light background for body
+  static const Color backgroundDark = Color(0xFF1E1E1E);  // Dark background for confirmation header
+  static const Color primaryBlue = Color(0xFF0C2B4E);     // Accent color (used in text/buttons/bottom nav)
+  static const Color successGreen = Color(0xFF4CAF50);    // Bright green for checkmark
 }
 
 class CustomBottomNavBar extends StatelessWidget {
@@ -41,9 +40,6 @@ class CustomBottomNavBar extends StatelessWidget {
 
 
 class BookingSuccessScreen extends StatelessWidget {
-  // This screen will likely receive the booked slot details as arguments.
-  // For demonstration, let's assume it receives the 'time' as a String
-  // and 'date' as a DateTime.
   final String bookedTime;
   final DateTime bookedDate;
 
@@ -55,192 +51,148 @@ class BookingSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The height of the dark confirmation section
+    const double confirmationHeaderHeight = 350;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), // Visible against dark header
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () {
-              // Navigate back to home or a main screen
-              Navigator.of(context).popUntil((route) => route.isFirst); // Example: Pop all routes until the first
-            },
-          ),
-        ],
-        // The header area where the success message appears
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E1E1E), // Dark background for the top section
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 💡 Success Icon and Confetti effect (simplified)
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Confetti Effect Placeholder (You'd use a package like 'confetti' for real effect)
-                    // For now, just a gradient circle to suggest the effect
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppColors.successGreen.withAlpha(50), // Lighter green for glow
-                            AppColors.successGreen.withAlpha(0),   // Transparent
-                          ],
-                          radius: 0.8,
+      backgroundColor: AppColors.backgroundLight,
+
+      // We use a custom body wrapper to manage the dark header and the scrollable content
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // 1. Dark Confirmation Header Section
+            Container(
+              height: confirmationHeaderHeight,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: AppColors.backgroundDark,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0), // Adjust top padding
+                  child: Column(
+                    children: [
+                      // AppBar Content (Back and Close Icons)
+                      _buildHeaderActions(context),
+
+                      // Success Content (Icon and Text)
+                      const SizedBox(height: 10),
+                      _buildSuccessIcon(),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Thanks! Your booking has\nbeen confirmed.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'You\'ll receive a reminder 1 hour before\nyour slot.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. Light Body Content Section
+            Transform.translate(
+              // Move the body content up to overlap the dark header edge
+              offset: const Offset(0.0, -10.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    // 🔹 Selected Slot Summary Card (White, Overlaps Dark Section)
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.successGreen,
-                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.successGreen.withAlpha(100),
-                            blurRadius: 15,
-                            spreadRadius: 2,
+                            color: Colors.black12.withOpacity(0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 60,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Selected Slot Summary",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87)),
+                          const Divider(color: Colors.grey, height: 20),
+                          _buildSummaryRow(
+                              "Date", DateFormat('dd MMM yyyy').format(bookedDate)),
+                          _buildSummaryRow("Time", bookedTime),
+                          _buildSummaryRow("Duration", "2 Hours"),
+                          const SizedBox(height: 10),
+                          const Text(
+                            "Minimum 4 videos required for each 2-hour slot.",
+                            style: TextStyle(fontSize: 12, color: Colors.black54),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 30),
+
+                    // 🔹 View my Schedule Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pushNamed(context, '/bookings'),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(color: AppColors.primaryBlue.withOpacity(0.5), width: 1.5),
+                          elevation: 2,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('View my Schedule', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.primaryBlue)),
+                            Icon(Icons.arrow_forward, color: AppColors.primaryBlue),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 🔹 Cancel Booking Button
+                    Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: () => Navigator.pushNamed(context, '/cancel_booking'),
+                        child: const Text(
+                          'Cancel Booking?',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 80),
                   ],
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Thanks! Your booking has\nbeen confirmed.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'You\'ll receive a reminder 1 hour before\nyour slot.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 20), // Extra space
-              ],
-            ),
-          ),
-        ),
-        toolbarHeight: 280, // Adjust height to fit content
-      ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔹 Selected Slot Summary
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Selected Slot Summary",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Date: ${DateFormat('dd MMM').format(bookedDate)}", // Using the passed date
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                  Text(
-                    "Time: $bookedTime", // Using the passed time
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                  const Text("Duration: 2 Hours", // Assuming 2 hours as per previous screen
-                      style: TextStyle(color: Colors.black87)),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Minimum 4 videos required for each 2-hour slot.",
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // 🔹 View my Schedule Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement navigation to "My Schedule" page
-                  print("View my Schedule tapped!");
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  side: BorderSide(color: Colors.grey.shade300, width: 1),
-                  elevation: 2,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('View my Schedule',
-                        style: TextStyle(fontSize: 16, color: AppColors.primaryBlue)),
-                    Icon(Icons.arrow_forward, color: AppColors.primaryBlue),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 🔹 Cancel Booking Button
-            Align(
-              alignment: Alignment.center,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Implement logic to cancel booking
-                  print("Cancel Booking tapped!");
-                },
-                child: const Text(
-                  'Cancel Booking?',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w600,
-                  ),
                 ),
               ),
             ),
@@ -250,25 +202,70 @@ class BookingSuccessScreen extends StatelessWidget {
 
       // 🔹 Fixed Bottom Navbar
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: 1, // Still on a 'Booking' related flow
+        currentIndex: 1,
         onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.of(context).popUntil((route) => route.isFirst); // Go to home
-              // Or Navigator.pushReplacementNamed(context, '/home');
-              break;
-            case 1:
-            // Currently on booking confirmation, maybe pop back to slot selection or home
-              Navigator.of(context).popUntil((route) => route.isFirst); // Example: Go to home
-              break;
-            case 2:
-              Navigator.pushNamed(context, '/plans');
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/profile');
-              break;
-          }
+          if (index == 0) Navigator.of(context).popUntil((route) => route.isFirst);
+          if (index == 2) Navigator.pushNamed(context, '/plans');
+          if (index == 3) Navigator.pushNamed(context, '/profile');
         },
+      ),
+    );
+  }
+
+  // Helper Widget for the Top Action Icons
+  Widget _buildHeaderActions(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper Widget for the Summary Rows
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("$label:", style: const TextStyle(color: Colors.black54, fontSize: 15)),
+          Text(value, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 15)),
+        ],
+      ),
+    );
+  }
+
+  // Helper Widget for the Success Icon
+  Widget _buildSuccessIcon() {
+    return Container(
+      width: 100, // Slightly reduced size
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppColors.successGreen,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.successGreen.withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.check,
+        color: Colors.white,
+        size: 60, // Smaller icon to fit the circle
       ),
     );
   }

@@ -4,11 +4,13 @@ import 'package:intl/intl.dart'; // Required for DateFormat
 import 'package:urban_advertising/core/theme.dart';
 import 'package:urban_advertising/widgets/bottom_navbar.dart';
 
-// Placeholder classes (Kept for completeness and to resolve dependencies)
+// --- Placeholder Classes (Updated for Dark Theme) ---
+// Remove these if you already have them defined in their respective files.
 class AppColors {
-  // Using your new color (0xFF0C2B4E)
-  static const Color background = Color(0xFFF0F0F0);
-  static const Color primaryBlue = Color(0xFF0C2B4E);
+  static const Color darkBackground = Color(0xFF141414); // Primary dark background
+  static const Color cardBackground = Color(0xFF1E1E1E); // Dark card color
+  static const Color primaryAccent = Color(0xFF0C2B4E); // Primary accent (purple/blue from screenshots)
+  static const Color secondaryText = Colors.white70;
 }
 
 class CustomBottomNavBar extends StatelessWidget {
@@ -18,21 +20,20 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
       items: const [
-        // These are the only valid children for the 'items' list
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.access_time), label: 'Booking'),
         BottomNavigationBarItem(icon: Icon(Icons.featured_play_list), label: 'Plans'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
-      selectedItemColor: AppColors.primaryBlue,
-      unselectedItemColor: Colors.grey,
+      selectedItemColor: AppColors.primaryAccent, // Use accent color
+      unselectedItemColor: Colors.grey.shade600,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.black, // Dark background for navbar
     );
   }
 }
@@ -74,17 +75,13 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBackground, // 1. Dark background
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0C2B4E), Color(0xFF0C2B4E)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.black, // 2. Dark Appbar background (no gradient needed)
           ),
         ),
         title: const Text(
@@ -100,10 +97,8 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
             padding: EdgeInsets.only(right: 16),
             child: CircleAvatar(
               radius: 18,
-              // Replace with your actual asset image path
-              // backgroundImage: AssetImage('assets/profile.png'),
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: Color(0xFF0C2B4E)),
+              backgroundColor: AppColors.primaryAccent, // Accent background
+              child: Icon(Icons.person, color: Colors.white),
             ),
           ),
         ],
@@ -113,24 +108,20 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Gradient Current Plan Section
+          // 🔹 Dark Current Plan Section
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0C2B4E), Color(0xFF0C2B4E)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: AppColors.cardBackground, // Dark card background
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black26,
+                    color: Colors.black.withOpacity(0.5),
                     blurRadius: 6,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -144,18 +135,18 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                   SizedBox(height: 6),
                   Text(
                     "You’ve posted 12 videos so far",
-                    style: TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
                   ),
                 ],
               ),
             ),
           ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'Available Slots',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), // White text
             ),
           ),
           const SizedBox(height: 16),
@@ -182,15 +173,15 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                     width: 60,
                     margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primaryBlue : Colors.white,
+                      color: isSelected ? AppColors.primaryAccent : AppColors.cardBackground, // Dark background
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.primaryBlue : Colors.grey.shade300,
+                        color: isSelected ? AppColors.primaryAccent : Colors.grey.shade700,
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12.withOpacity(isSelected ? 0.3 : 0.1),
+                          color: Colors.black.withOpacity(isSelected ? 0.5 : 0.2), // Dark shadow
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -204,7 +195,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected ? Colors.white : Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -212,7 +203,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                           formatDateMonth(date),
                           style: TextStyle(
                             fontSize: 12,
-                            color: isSelected ? Colors.white : Colors.black54,
+                            color: isSelected ? Colors.white : AppColors.secondaryText,
                           ),
                         ),
                       ],
@@ -237,15 +228,12 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                   return GestureDetector(
                     onTap: () => setState(() => selectedSlot = slot),
                     child: Card(
-                      color: isSelected
-                          ? AppColors.primaryBlue.withAlpha(20)
-                          : Colors.white,
+                      // FIX: Replaced .withAlpha(20) for a subtle dark glow
+                      color: isSelected ? AppColors.primaryAccent.withAlpha(20) : AppColors.cardBackground,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(
-                          color: isSelected
-                              ? AppColors.primaryBlue
-                              : Colors.grey.shade300,
+                          color: isSelected ? AppColors.primaryAccent : Colors.grey.shade700,
                           width: isSelected ? 1.4 : 1,
                         ),
                       ),
@@ -254,18 +242,13 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                         title: Text(
                           slot,
                           style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            color: Colors.white,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                         trailing: Icon(
-                          isSelected
-                              ? Icons.check_circle
-                              : Icons.schedule,
-                          color:
-                          isSelected ? AppColors.primaryBlue : Colors.grey,
+                          isSelected ? Icons.check_circle : Icons.schedule,
+                          color: isSelected ? AppColors.primaryAccent : Colors.grey.shade600,
                         ),
                       ),
                     ),
@@ -283,13 +266,13 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBackground, // Dark background
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
+                      color: Colors.black.withOpacity(0.5),
                       blurRadius: 6,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -298,19 +281,19 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                   children: [
                     const Text("Selected Slot Summary",
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                            fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                     const SizedBox(height: 8),
                     // Use DateFormat to display the selected date
                     Text("Date: ${DateFormat('dd MMM').format(selectedDate)}",
-                        style: const TextStyle(color: Colors.black87)),
+                        style: const TextStyle(color: AppColors.secondaryText)),
                     Text("Time: $selectedSlot",
-                        style: const TextStyle(color: Colors.black87)),
+                        style: const TextStyle(color: AppColors.secondaryText)),
                     const Text("Duration: 2 Hours",
-                        style: TextStyle(color: Colors.black87)),
+                        style: TextStyle(color: AppColors.secondaryText)),
                     const SizedBox(height: 4),
                     const Text(
                       "Minimum 4 videos required for each 2-hour slot.",
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -328,14 +311,19 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                 onPressed: selectedSlot == null
                     ? null
                     : () {
+                  // FIX: Ensure both date and time are passed for the confirmation screen
                   Navigator.pushNamed(context, '/booking_success',
-                      arguments: selectedSlot);
+                      arguments: {
+                        'time': selectedSlot!,
+                        'date': selectedDate,
+                      });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
+                  backgroundColor: AppColors.primaryAccent, // Accent color for button
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
-                  disabledBackgroundColor: AppColors.primaryBlue.withAlpha(127),
+                  // FIX: Use .withAlpha() to replace deprecated .withOpacity()
+                  disabledBackgroundColor: AppColors.primaryAccent.withAlpha(127),
                 ),
                 child: const Text('Confirm Booking',
                     style: TextStyle(fontSize: 16, color: Colors.white)),
@@ -347,8 +335,6 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
       ),
 
       // 🔹 Fixed Bottom Navbar
-      // FIX: The CustomBottomNavBar widget is called here correctly,
-      // and the navigation logic is placed inside the onTap callback.
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 1, // <-- 1 because this is the "Slot Booking" tab
         onTap: (i) {

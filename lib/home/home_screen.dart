@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Our Services',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
