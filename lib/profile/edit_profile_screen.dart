@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../profile/settings_screen.dart'; // ✅ Import your settings screen
 
 class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
@@ -7,23 +8,31 @@ class EditProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black, // Dark theme
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Edit Profile',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {},
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -42,17 +51,24 @@ class EditProfileScreen extends StatelessWidget {
                   ),
                   Container(
                     decoration: const BoxDecoration(
-                        shape: BoxShape.circle, color: Colors.black),
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
                     padding: const EdgeInsets.all(6),
                     child: const Icon(Icons.camera_alt,
-                        color: Colors.white, size: 18),
+                        color: Colors.black, size: 18),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            const Text('Change Picture',
-                style: TextStyle(fontWeight: FontWeight.w500)),
+            const Text(
+              'Change Picture',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Input Fields
@@ -71,14 +87,19 @@ class EditProfileScreen extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Update',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Update',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
@@ -87,15 +108,35 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
+  // ✅ Better visible input field design
   static Widget _buildTextField(String label, String hint,
       {bool obscure = false}) {
     return TextField(
       obscureText: obscure,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+      ),
+      cursorColor: Colors.white,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(
+          color: Colors.white70, // Light white for label
+          fontSize: 15,
+        ),
         hintText: hint,
-        border: OutlineInputBorder(
+        hintStyle: const TextStyle(
+          color: Colors.white38, // Slightly dim for hint
+        ),
+        filled: true,
+        fillColor: Colors.white10, // Subtle transparent background
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.white38),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.white),
         ),
         contentPadding:
         const EdgeInsets.symmetric(vertical: 14, horizontal: 16),

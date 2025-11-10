@@ -360,7 +360,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
             case 1:
               break; // Booking (Current page)
             case 2:
-              Navigator.pushNamed(context, '/plans'); // 📑 Plans
+              Navigator.pushNamed(context, '/subscription'); // 📑 Plans
               break;
             case 3:
               Navigator.pushNamed(context, '/profile'); // 👤 Profile

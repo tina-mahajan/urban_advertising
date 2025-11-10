@@ -13,6 +13,7 @@ final ThemeData appTheme = ThemeData(
   useMaterial3: true,
   primaryColor: AppColors.primary,
   scaffoldBackgroundColor: AppColors.background,
+  fontFamily: 'Poppins',
   appBarTheme: const AppBarTheme(
     backgroundColor: AppColors.primary,
     foregroundColor: Colors.white,

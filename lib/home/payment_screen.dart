@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:urban_advertising/core/theme.dart';
 
-class PaymentScreen extends StatelessWidget {
+class PaymentScreen extends StatefulWidget {
   final String planName;
   final String planPrice;
 
@@ -12,12 +12,22 @@ class PaymentScreen extends StatelessWidget {
   });
 
   @override
+  State<PaymentScreen> createState() => _PaymentScreenState();
+}
+
+class _PaymentScreenState extends State<PaymentScreen> {
+  String? selectedPayment; // stores selected payment method
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Confirm Your Upgrade'),
-        backgroundColor: AppColors.primary,
+        title: const Text('Confirm Your Upgrade',
+            style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -30,30 +40,30 @@ class PaymentScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 25),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.black,
+                border: Border.all(color: Colors.white24),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: Colors.white.withOpacity(0.1),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Plan: $planName Plan',
+                  Text('Plan: ${widget.planName}',
                       style: const TextStyle(
-                          color: AppColors.secondary, fontSize: 16)),
+                          color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 8),
                   const Text('Billing Cycle: Monthly',
-                      style:
-                      TextStyle(color: AppColors.secondary, fontSize: 16)),
+                      style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 8),
-                  Text('Total Due: $planPrice',
+                  Text('Total Due: ${widget.planPrice}',
                       style: const TextStyle(
-                          color: AppColors.primary,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 18)),
                 ],
@@ -64,18 +74,19 @@ class PaymentScreen extends StatelessWidget {
               'Choose Payment Method',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: Colors.white,
                 fontSize: 18,
               ),
             ),
             const SizedBox(height: 15),
 
             // Payment Options
-            _buildPaymentOption(Icons.credit_card, 'Pay with Visa'),
-            _buildPaymentOption(Icons.credit_card, 'Pay with Mastercard'),
-            _buildPaymentOption(Icons.payment, 'Pay with Paypal'),
-            _buildPaymentOption(Icons.apple, 'Pay with Apple Pay'),
-            _buildPaymentOption(Icons.payment_rounded, 'Pay with Stripe'),
+            _buildPaymentOption(Icons.credit_card, 'Visa', 'Visa'),
+            _buildPaymentOption(Icons.credit_card_rounded, 'Mastercard', 'Mastercard'),
+            _buildPaymentOption(Icons.payments_rounded, 'PayPal', 'PayPal'),
+            _buildPaymentOption(Icons.apple, 'Apple Pay', 'Apple Pay'),
+            _buildPaymentOption(Icons.payment_rounded, 'Stripe', 'Stripe'),
+
             const Spacer(),
 
             // Buttons
@@ -84,17 +95,28 @@ class PaymentScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: selectedPayment == null
+                        ? null
+                        : () {
                       Navigator.pushNamed(context, '/success');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: selectedPayment == null
+                          ? Colors.white10
+                          : Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Continue'),
+                    child: Text(
+                      'Continue',
+                      style: TextStyle(
+                        color: selectedPayment == null
+                            ? Colors.white38
+                            : Colors.black,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -103,14 +125,14 @@ class PaymentScreen extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary),
+                      side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: const Text('Go Back',
-                        style: TextStyle(color: AppColors.primary)),
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],
@@ -121,22 +143,39 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentOption(IconData icon, String text) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(
-          text,
-          style: const TextStyle(color: AppColors.textDark),
+  Widget _buildPaymentOption(IconData icon, String text, String value) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedPayment = value;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: selectedPayment == value
+                ? Colors.white
+                : Colors.white24,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.black,
         ),
-        trailing: const Icon(Icons.check_box_outline_blank,
-            color: AppColors.accent),
+        child: ListTile(
+          leading: Icon(icon, color: Colors.white),
+          title: Text(
+            text,
+            style: const TextStyle(color: Colors.white),
+          ),
+          trailing: Icon(
+            selectedPayment == value
+                ? Icons.check_circle
+                : Icons.circle_outlined,
+            color: selectedPayment == value
+                ? Colors.white
+                : Colors.white38,
+          ),
+        ),
       ),
     );
   }
