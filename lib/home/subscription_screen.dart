@@ -3,6 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:urban_advertising/home/payment_screen.dart';
 import '../widgets/bottom_navbar.dart';
 
+class AppColors {
+  static const Color primaryAccent = Color(0xFF3A3A3A);
+  static const Color secondaryAccent = Color(0xFFD0D337);
+  static const Color cardSurface = Color(0xFF1B1B1B);
+  static const Color darkBackground = Color(0xFF0A0A0A);
+  static const Color textLight = Colors.white;
+  static const Color textMuted = Colors.white70;
+  static const Color checkIcon = Color(0xFFFFFFFF);
+}
+
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
 
@@ -18,52 +28,49 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     {
       'title': 'Basic Plan',
       'price': '₹9,999/- (Per Month)',
+      'icon': Icons.trending_up_outlined,
       'features': [
-        {'text': '10 video shoots', 'highlight': true},
-        {'text': 'Professional video editing'},
-        {'text': '1 revision per video', 'highlight': true},
-        {'text': '1 change allowed after final delivery'},
+        {'icon': Icons.videocam_outlined, 'text': '10 video shoots', 'highlight': true},
+        {'icon': Icons.video_call_outlined, 'text': 'Professional video editing'},
+        {'icon': Icons.replay_outlined, 'text': '1 revision per video', 'highlight': true},
+        {'icon': Icons.change_circle_outlined, 'text': '1 change allowed after final delivery'},
       ],
     },
     {
       'title': 'Growth Plan',
       'price': '₹14,999/- (Per Month)',
+      'icon': Icons.slow_motion_video_outlined,
       'features': [
-        {'text': '15 video shoots', 'highlight': true},
-        {'text': 'Professional editing'},
-        {'text': '3 revision per video', 'highlight': true},
-        {
-          'text': '2 changes allowed after delivery per video',
-          'highlight': true,
-        },
-        {'text': 'Social media posting support'},
-        {'text': 'Logo generation (if required)'},
+        {'icon': Icons.videocam_outlined, 'text': '15 video shoots', 'highlight': true},
+        {'icon': Icons.video_settings_outlined, 'text': 'Professional editing'},
+        {'icon': Icons.repeat_on_outlined, 'text': '3 revision per video', 'highlight': true},
+        {'icon': Icons.cached_outlined, 'text': '2 changes allowed after delivery per video', 'highlight': true},
+        {'icon': Icons.share_outlined, 'text': 'Social media posting support'},
+        {'icon': Icons.brush_outlined, 'text': 'Logo generation (if required)'},
       ],
     },
     {
       'title': 'Premium Plan',
       'price': '₹24,999/- (Per Month)',
+      'icon': Icons.diamond_outlined,
       'features': [
-        {'text': '30 video shoots', 'highlight': true},
-        {'text': 'Premium editing'},
-        {'text': '3 changes allowed after delivery', 'highlight': true},
-        {'text': 'Daily posting support'},
-        {'text': '7 creative posters per month', 'highlight': true},
-        {'text': '24/7 priority support'},
-        {'text': '1 AI generated Video', 'highlight': true},
-        {'text': 'Logo generation (if required)'},
-        {'text': 'Script + content planning'},
-        {'text': 'Brand guideline support'},
+        {'icon': Icons.videocam_outlined, 'text': '30 video shoots', 'highlight': true},
+        {'icon': Icons.star_outline, 'text': 'Premium editing'},
+        {'icon': Icons.change_circle_outlined, 'text': '3 changes allowed after delivery', 'highlight': true},
+        {'icon': Icons.calendar_month_outlined, 'text': 'Daily posting support'},
+        {'icon': Icons.design_services_outlined, 'text': '7 creative posters per month', 'highlight': true},
+        {'icon': Icons.edit_note_outlined, 'text': 'Script + content planning'},
+        {'icon': Icons.smart_toy_outlined, 'text': '1 AI generated Video', 'highlight': true},
+        {'icon': Icons.brush_outlined, 'text': 'Logo generation (if required)'},
+        {'icon': Icons.support_agent_outlined, 'text': '24/7 priority support', 'highlight': true},
+        {'icon': Icons.branding_watermark_outlined, 'text': 'Brand guideline support'},
       ],
     },
   ];
 
   void onTap(int index) {
-    setState(() {
-      currentIndex = index;
-    });
+    setState(() => currentIndex = index);
 
-    // Navigate to different screens based on index
     switch (index) {
       case 0:
         Navigator.pushReplacementNamed(context, '/home');
@@ -72,7 +79,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         Navigator.pushReplacementNamed(context, '/slot_booking');
         break;
       case 2:
-        // Already on Plans screen
         break;
       case 3:
         Navigator.pushReplacementNamed(context, '/profile');
@@ -90,30 +96,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         title: const Text(
           'Our Plans',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textLight,
             fontWeight: FontWeight.bold,
             fontFamily: 'Poppins',
             letterSpacing: 1.2,
           ),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: AppColors.textLight),
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A)],
+            colors: [AppColors.darkBackground, Color(0xFF1A1A1A)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(
-            top: 100,
-            left: 16,
-            right: 16,
-            bottom: 30,
-          ),
+          padding: const EdgeInsets.only(top: 100, left: 16, right: 16, bottom: 30),
           child: Column(
             children: List.generate(plans.length, (index) {
               final plan = plans[index];
@@ -136,20 +137,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
-                    margin: const EdgeInsets.only(bottom: 24),
+                    margin: const EdgeInsets.only(bottom: 30),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1,
+                        color: hoveredIndex == index
+                            ? AppColors.secondaryAccent
+                            : AppColors.primaryAccent.withOpacity(0.4),
+                        width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: hoveredIndex == index
-                              ? Colors.orangeAccent.withOpacity(0.4)
-                              : Colors.white.withOpacity(0.08),
+                              ? AppColors.secondaryAccent.withOpacity(0.35)
+                              : AppColors.primaryAccent.withOpacity(0.15),
                           blurRadius: hoveredIndex == index ? 25 : 10,
-                          spreadRadius: hoveredIndex == index ? 2 : 1,
+                          spreadRadius: hoveredIndex == index ? 3 : 1,
                           offset: const Offset(0, 6),
                         ),
                       ],
@@ -161,10 +164,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                             child: Container(
-                              color: Colors.white.withOpacity(0.05),
+                              color: AppColors.cardSurface.withOpacity(0.8),
                             ),
                           ),
                         ),
+
+                        // 🔸 Faint background icon (new addition)
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Icon(
+                            plan['icon'] as IconData,
+                            size: 100,
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+
                         Positioned(
                           top: 0,
                           left: 0,
@@ -175,7 +190,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: hoveredIndex == index
-                                    ? [Colors.white, Colors.orangeAccent]
+                                    ? [AppColors.secondaryAccent, AppColors.primaryAccent]
                                     : [Colors.transparent, Colors.transparent],
                               ),
                             ),
@@ -201,23 +216,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    AnimatedRotation(
-                                      turns: hoveredIndex == index ? 0.1 : 0.0,
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      child: const Icon(
-                                        Icons.star_border_outlined,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
+                                    Icon(
+                                      Icons.star,
+                                      color: AppColors.textLight,
+                                      size: 22,
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
                                       plan['title'] as String,
                                       style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
+                                        color: AppColors.textLight,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'Poppins',
                                         letterSpacing: 1.1,
@@ -229,39 +238,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 Text(
                                   plan['price'] as String,
                                   style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.secondaryAccent,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
                                     letterSpacing: 1.1,
                                     fontFamily: 'Poppins',
                                   ),
                                 ),
-                                AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 300),
-                                  opacity: hoveredIndex == index ? 1 : 0.5,
-                                  child: const Divider(
-                                    color: Colors.white24,
-                                    height: 20,
-                                  ),
+                                Divider(
+                                  color: AppColors.primaryAccent.withOpacity(0.5),
+                                  height: 20,
                                 ),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: (plan['features'] as List).map((
-                                    feature,
-                                  ) {
+                                  children: (plan['features'] as List).map((feature) {
                                     final f = feature as Map<String, dynamic>;
                                     return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
                                       child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(
-                                            Icons.check,
-                                            color: Colors.white,
-                                            size: 18,
+                                          Icon(
+                                            f['icon'] as IconData? ?? Icons.check,
+                                            color: AppColors.checkIcon,
+                                            size: 20,
                                           ),
                                           const SizedBox(width: 8),
                                           Expanded(
@@ -270,8 +270,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                               style: TextStyle(
                                                 fontFamily: 'Poppins',
                                                 color: f['highlight'] == true
-                                                    ? Colors.orangeAccent
-                                                    : Colors.white70,
+                                                    ? AppColors.secondaryAccent
+                                                    : AppColors.textMuted,
                                                 fontSize: 15,
                                                 height: 1.4,
                                               ),
@@ -286,44 +286,54 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 Center(
                                   child: AnimatedScale(
                                     duration: const Duration(milliseconds: 250),
-                                    scale: hoveredIndex == index ? 1.05 : 1.0,
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => PaymentScreen(
-                                              planName: plan['title'] as String,
-                                              planPrice:
-                                                  plan['price'] as String,
+                                    scale: hoveredIndex == index ? 1.08 : 1.0,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          if (hoveredIndex == index)
+                                            BoxShadow(
+                                              color: AppColors.secondaryAccent.withOpacity(0.4),
+                                              blurRadius: 12,
+                                              spreadRadius: 2,
                                             ),
-                                          ),
-                                        );
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(
-                                          color: Colors.white,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                        ),
-                                        backgroundColor: hoveredIndex == index
-                                            ? Colors.white12
-                                            : Colors.transparent,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                          horizontal: 30,
-                                        ),
+                                        ],
                                       ),
-                                      child: const Text(
-                                        'Upgrade Now',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 1.1,
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PaymentScreen(
+                                                planName: plan['title'] as String,
+                                                planPrice: plan['price'] as String,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: AppColors.secondaryAccent,
+                                            width: hoveredIndex == index ? 2 : 1.2,
+                                          ),
+                                          backgroundColor: hoveredIndex == index
+                                              ? AppColors.secondaryAccent.withOpacity(0.1)
+                                              : Colors.transparent,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12, horizontal: 30),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Upgrade Now',
+                                          style: TextStyle(
+                                            color: AppColors.textLight,
+                                            fontFamily: 'Poppins',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 18,
+                                            letterSpacing: 1.1,
+                                          ),
                                         ),
                                       ),
                                     ),
