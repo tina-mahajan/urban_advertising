@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import '../profile/settings_screen.dart'; // ✅ Import your settings screen
+import '../profile/settings_screen.dart';
 
 class EditProfileScreen extends StatelessWidget {
   const EditProfileScreen({super.key});
@@ -8,7 +8,7 @@ class EditProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Dark theme
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
@@ -75,8 +75,6 @@ class EditProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Input Fields
             _buildTextField('Username', 'Sai Chaudhari'),
             const SizedBox(height: 16),
             _buildTextField('Email', 'sai1771@gmail.com'),
@@ -113,7 +111,6 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Better visible input field design
   static Widget _buildTextField(String label, String hint,
       {bool obscure = false}) {
     return TextField(
