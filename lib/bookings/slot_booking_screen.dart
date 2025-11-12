@@ -10,6 +10,7 @@ class AppColors {
   static const Color darkBackground = Color(0xFF141414); // Primary dark background
   static const Color cardBackground = Color(0xFF1E1E1E); // Dark card color
   static const Color primaryAccent = Color(0xFF0C2B4E); // Primary accent (purple/blue from screenshots)
+  static const Color nav = Color(0xFF00BFFF); // Primary accent (purple/blue from screenshots)
   static const Color secondaryText = Colors.white70;
 }
 
@@ -29,7 +30,7 @@ class CustomBottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.featured_play_list), label: 'Plans'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
-      selectedItemColor: AppColors.primaryAccent, // Use accent color
+      selectedItemColor: AppColors.nav, // Use accent color
       unselectedItemColor: Colors.grey.shade600,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,

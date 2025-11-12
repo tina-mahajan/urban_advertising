@@ -197,99 +197,6 @@ class _HomeScreenState extends State<HomeScreen> {
               }).toList(),
             ),
 
-            // 🔹 SERVICES SECTION
-            const Padding(
-              padding:
-              EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Our Services',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: services.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.1,
-                ),
-                itemBuilder: (context, index) {
-                  final service = services[index];
-                  bool isHovered = false;
-
-                  return StatefulBuilder(
-                    builder: (context, setState) {
-                      return MouseRegion(
-                        onEnter: (_) => setState(() => isHovered = true),
-                        onExit: (_) => setState(() => isHovered = false),
-                        child: GestureDetector(
-                          onTap: () {},
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: isHovered
-                                    ? [const Color(0xFF1E88E5), const Color(0xFF673AB7)]
-                                    : [const Color(0xFF232323), const Color(0xFF121212)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                if (isHovered)
-                                  BoxShadow(
-                                    color: Colors.blueAccent.withOpacity(0.4),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Colors.white.withOpacity(0.1),
-                                  child: Icon(service['icon'], color: Colors.white, size: 30),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  service['title'],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-
-
-            const SizedBox(height: 60),
-
-
 
             // 🌙 Active Plan Section (Dark Theme)
             Padding(
@@ -418,6 +325,103 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+
+
+            // 🔹 SERVICES SECTION
+            const Padding(
+              padding:
+              EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Our Services',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: services.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.1,
+                ),
+                itemBuilder: (context, index) {
+                  final service = services[index];
+                  bool isHovered = false;
+
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return MouseRegion(
+                        onEnter: (_) => setState(() => isHovered = true),
+                        onExit: (_) => setState(() => isHovered = false),
+                        child: GestureDetector(
+                          onTap: () {},
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isHovered
+                                    ? [const Color(0xFF1E88E5), const Color(0xFF673AB7)]
+                                    : [const Color(0xFF232323), const Color(0xFF121212)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                if (isHovered)
+                                  BoxShadow(
+                                    color: Colors.blueAccent.withOpacity(0.4),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 28,
+                                  backgroundColor: Colors.white.withOpacity(0.1),
+                                  child: Icon(service['icon'], color: Colors.white, size: 30),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  service['title'],
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+
+            const SizedBox(height: 60),
+
+
+
+
 
           ],
         ),

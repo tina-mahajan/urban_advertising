@@ -29,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.pushReplacementNamed(context, '/slot_booking');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/plans');
+        Navigator.pushReplacementNamed(context, '/subscription');
         break;
       case 3:
       // Already on Profile screen
