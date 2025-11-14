@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-// Assuming the path is correct in your project
-// import '../../core/theme.dart';
 
-// --- Placeholder Colors (MUST match your actual AppColors definition) ---
 class AppColors {
-  static const Color darkBackground = Color(0xFF141414);  // Primary dark background
-  static const Color cardBackground = Color(0xFF1E1E1E);   // Dark card/surface color
-  static const Color primaryAccent = Color(0xFF5A00FF);   // Your main accent color (Purple/Blue)
-  static const Color secondaryText = Colors.white70;       // Light grey text
+  static const Color darkBackground = Color(0xFF141414);
+  static const Color cardBackground = Color(0xFF1E1E1E);
+  static const Color primaryAccent = Color(0xFF5A00FF);
+  static const Color secondaryText = Colors.white70;
 }
-// --- END Placeholder Colors ---
-
 
 class BookingHistoryScreen extends StatefulWidget {
   const BookingHistoryScreen({Key? key}) : super(key: key);
@@ -35,10 +30,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     super.dispose();
   }
 
-  // Helper function to create a status color with a fixed alpha (opacity) value
   Color _getStatusBackground(Color color) {
-    // FIX: Using .withAlpha() instead of deprecated .withOpacity()
-    // Sets the alpha channel to roughly 15% opacity (255 * 0.15 ≈ 38)
+
     return color.withAlpha(38);
   }
 
@@ -51,7 +44,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     required Color statusColor,
   }) {
     return Card(
-      color: AppColors.cardBackground, // Dark card color
+      color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 4,
@@ -70,7 +63,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              // Use fixed alpha helper function
               decoration: BoxDecoration(
                 color: _getStatusBackground(statusColor),
                 borderRadius: BorderRadius.circular(8),
@@ -95,12 +87,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
   Widget historyCard({
     required String date,
     required String time,
-    // Add status for historical clarity (e.g., Completed/Cancelled)
     required String statusText,
     required Color statusColor,
   }) {
     return Card(
-      color: AppColors.cardBackground, // Dark card color
+      color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 4,
@@ -138,24 +129,23 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Define custom status colors matching the dark theme:
-    const Color confirmedColor = Colors.lightGreenAccent; // Brighter green for contrast
-    const Color pendingColor = Colors.orangeAccent;       // Brighter orange/blue
-    const Color completedColor = AppColors.primaryAccent; // Use accent color for completed
+    const Color confirmedColor = Colors.lightGreenAccent;
+    const Color pendingColor = Colors.orangeAccent;
+    const Color completedColor = AppColors.primaryAccent;
     const Color cancelledColor = Colors.redAccent;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground, // Dark Screen Background
+      backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         title: const Text("Bookings", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.black, // Dark AppBar
+        backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
           unselectedLabelColor: AppColors.secondaryText,
-          indicatorColor: AppColors.primaryAccent, // Accent indicator line
+          indicatorColor: AppColors.primaryAccent,
           tabs: const [
             Tab(text: "Upcoming"),
             Tab(text: "Pending"),
@@ -194,7 +184,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
               bookingCard(
                 date: "15 Nov 2025",
                 time: "11:00 AM",
-                name: "Ramesh Kumar",
+                name: "Jayesh Chaudhari",
                 phone: "+91 9871112233",
                 statusText: "Awaiting Confirmation",
                 statusColor: pendingColor,

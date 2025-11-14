@@ -14,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int currentIndex = 3; // Profile tab selected by default
+  int currentIndex = 3;
 
   void onTap(int index) {
     setState(() {
@@ -32,7 +32,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.pushReplacementNamed(context, '/subscription');
         break;
       case 3:
-      // Already on Profile screen
         break;
     }
   }
@@ -70,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Profile Card
+
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
