@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:urban_advertising/core/theme.dart';
 import 'package:urban_advertising/screens/auth/login_screen.dart';
 import 'package:urban_advertising/screens/auth/register_screen.dart';
-import 'package:urban_advertising/home/home_screen.dart';
+import 'package:urban_advertising/Employee/screens/emp_home_screen.dart';
 import 'package:urban_advertising/home/subscription_screen.dart';
 import 'package:urban_advertising/home/payment_screen.dart';
 import 'package:urban_advertising/home/success_screen.dart';
@@ -29,12 +29,13 @@ class MyApp extends StatelessWidget {
       // ✅ Add Poppins font globally here
       theme: appTheme,
       // initial page
-      initialRoute: '/login',
+      // initialRoute: '/login',
+      initialRoute: '/home',
 
       // All app routes
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const EmployeeHomeScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
         '/payment': (context) => const PaymentScreen(
           planName: '',
