@@ -56,6 +56,7 @@ class MyApp extends StatelessWidget {
         '/bookings': (context) => const BookingsScreen(),
         '/slot_booking': (context) => const SlotBookingScreen(),
 
+
         '/booking_success': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
 

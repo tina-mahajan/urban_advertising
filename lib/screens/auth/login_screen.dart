@@ -14,7 +14,6 @@ class LoginScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // --- Background with subtle gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -24,8 +23,6 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // --- Glassmorphism container
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -73,10 +70,9 @@ class LoginScreen extends StatelessWidget {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             labelText: "Email Address",
-                            labelStyle:
-                            const TextStyle(color: Colors.white70),
-                            prefixIcon: const Icon(Icons.email,
-                                color: Colors.white70),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            prefixIcon:
+                            const Icon(Icons.email, color: Colors.white70),
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.05),
                             enabledBorder: OutlineInputBorder(
@@ -86,8 +82,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                              const BorderSide(color: Colors.white),
+                              borderSide: const BorderSide(color: Colors.white),
                             ),
                           ),
                         ),
@@ -99,8 +94,7 @@ class LoginScreen extends StatelessWidget {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             labelText: "Password",
-                            labelStyle:
-                            const TextStyle(color: Colors.white70),
+                            labelStyle: const TextStyle(color: Colors.white70),
                             prefixIcon:
                             const Icon(Icons.lock, color: Colors.white70),
                             filled: true,
@@ -112,8 +106,7 @@ class LoginScreen extends StatelessWidget {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                              const BorderSide(color: Colors.white),
+                              borderSide: const BorderSide(color: Colors.white),
                             ),
                           ),
                         ),
@@ -134,8 +127,8 @@ class LoginScreen extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>
-                                    const HomeScreen()),
+                                  builder: (context) => const HomeScreen(),
+                                ),
                               );
                             },
                             child: const Text(
@@ -162,8 +155,9 @@ class LoginScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                      const RegisterScreen()),
+                                    builder: (context) =>
+                                    const RegisterScreen(),
+                                  ),
                                 );
                               },
                               child: const Text(
@@ -175,6 +169,87 @@ class LoginScreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // -------------------------------
+                        //  Temporary Dashboard Buttons
+                        // -------------------------------
+                        const Text(
+                          "Login As (Temporary):",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+
+                        // User Dashboard
+                        SizedBox(
+                          width: double.infinity,
+                          height: 45,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/home');
+                            },
+                            child: const Text(
+                              "User Dashboard",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Employee Dashboard
+                        SizedBox(
+                          width: double.infinity,
+                          height: 45,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                  context, '/employee_dashboard');
+                            },
+                            child: const Text(
+                              "Employee Dashboard",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Admin Dashboard
+                        SizedBox(
+                          width: double.infinity,
+                          height: 45,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/admin_dashboard');
+                            },
+                            child: const Text(
+                              "Admin Dashboard",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
                         ),
                       ],
                     ),
