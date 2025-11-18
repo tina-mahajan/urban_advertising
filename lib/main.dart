@@ -7,13 +7,22 @@ import 'package:urban_advertising/home/subscription_screen.dart';
 import 'package:urban_advertising/home/payment_screen.dart';
 import 'package:urban_advertising/home/success_screen.dart';
 import 'package:urban_advertising/profile/profile_screen.dart';
-import 'package:urban_advertising/profile/edit_profile_screen.dart';
 import 'package:urban_advertising/bookings/bookings_screen.dart';
 import 'package:urban_advertising/bookings/booking_success_screen.dart';
 import 'package:urban_advertising/bookings/cancel_booking_screen.dart';
 import 'package:urban_advertising/bookings/slot_booking_screen.dart';
+import 'package:urban_advertising/home/home_screen.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -25,26 +34,18 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Urban Advertising',
-
-      // ✅ Add Poppins font globally here
       theme: appTheme,
-      // initial page
-      // initialRoute: '/login',
-      initialRoute: '/home',
-
-      // All app routes
+      initialRoute: '/login',
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const EmployeeHomeScreen(),
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
-        '/payment': (context) => const PaymentScreen(
-          planName: '',
-          planPrice: '',
-        ),
+        '/payment': (context) =>
+        const PaymentScreen(planName: '', planPrice: ''),
         '/success': (context) {
-          final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-
+          final args = ModalRoute.of(context)?.settings.arguments
+          as Map<String, dynamic>?;
           return SuccessScreen(
             planName: args?['planName'] ?? '',
             planPrice: args?['planPrice'] ?? '',
@@ -53,29 +54,22 @@ class MyApp extends StatelessWidget {
           );
         },
         '/profile': (context) => const ProfileScreen(),
-        '/editProfile': (context) => const EditProfileScreen(),
         '/bookings': (context) => const BookingsScreen(),
         '/slot_booking': (context) => const SlotBookingScreen(),
-
-
+        '/emp_home': (context) => const EmployeeHomeScreen(),
         '/booking_success': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-
-          if (args is Map<String, dynamic> &&
-              args.containsKey('time') &&
-              args.containsKey('date')) {
+          if (args is Map<String, dynamic>) {
             return BookingSuccessScreen(
-              bookedTime: args['time'] as String,
-              bookedDate: args['date'] as DateTime,
+              bookedTime: args['time'],
+              bookedDate: args['date'],
             );
           }
-
           return BookingSuccessScreen(
             bookedTime: 'Error loading time',
             bookedDate: DateTime.now(),
           );
         },
-
         '/cancel_booking': (context) => const CancelBookingScreen(),
       },
     );

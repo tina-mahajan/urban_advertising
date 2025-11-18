@@ -1,10 +1,94 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:urban_advertising/core/theme.dart';
 import 'package:urban_advertising/screens/auth/login_screen.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  Future<void> registerUser() async {
+    final name = nameController.text.trim();
+    final phone = phoneController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+      showMessage("Please fill all fields", Colors.red);
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      // Create user
+      UserCredential userCredential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      String uid = userCredential.user!.uid;
+
+      // Store customer data in Firestore
+      await FirebaseFirestore.instance.collection("Customer").doc(uid).set({
+        "Customer_Id": uid,
+        "Customer_Name": name,
+        "Customer_Email": email,
+        "Customer_Mobile_Number": phone,
+        "Customer_Isactive": true,
+        "Created_At": DateTime.now(),
+      });
+
+      setState(() => isLoading = false);
+      showMessage("Account created successfully", Colors.green);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+
+    } on FirebaseAuthException catch (e) {
+      setState(() => isLoading = false);
+
+      String msg = "Registration failed";
+
+      if (e.code == "email-already-in-use") {
+        msg = "This email is already registered";
+      } else if (e.code == "weak-password") {
+        msg = "Password must be at least 6 characters";
+      } else if (e.code == "invalid-email") {
+        msg = "Invalid email format";
+      }
+
+      showMessage(msg, Colors.red);
+      print("AUTH ERROR: ${e.code} | ${e.message}");
+
+    } catch (e) {
+      setState(() => isLoading = false);
+      showMessage("Unexpected Error: $e", Colors.red);
+      print("GENERAL ERROR: $e");
+    }
+  }
+
+  void showMessage(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: color),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +96,6 @@ class RegisterScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Background gradient (dark)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -22,8 +105,6 @@ class RegisterScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // Main content
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -37,25 +118,11 @@ class RegisterScreen extends StatelessWidget {
                       color: Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(25),
                       border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 25,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
                     ),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Logo
-                        Image.asset(
-                          'assets/white.png', // Add your logo here
-                          height: 80,
-                        ),
+                        Image.asset('assets/white.png', height: 80),
                         const SizedBox(height: 20),
-
-                        // Title
                         const Text(
                           "Create Account ✨",
                           style: TextStyle(
@@ -65,72 +132,65 @@ class RegisterScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Join Urban Advertising today",
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
                         const SizedBox(height: 30),
 
-                        // Full Name
                         _buildInputField(
+                          controller: nameController,
                           label: "Full Name",
                           icon: Icons.person,
                         ),
                         const SizedBox(height: 20),
 
-                        // Email Address
                         _buildInputField(
+                          controller: phoneController,
+                          label: "Phone Number",
+                          icon: Icons.phone,
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildInputField(
+                          controller: emailController,
                           label: "Email Address",
                           icon: Icons.email,
                         ),
                         const SizedBox(height: 20),
 
-                        // Password
                         _buildInputField(
+                          controller: passwordController,
                           label: "Password",
                           icon: Icons.lock,
                           obscureText: true,
                         ),
                         const SizedBox(height: 30),
 
-                        // Register Button
                         SizedBox(
                           width: double.infinity,
+                          height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15),
                               ),
                             ),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
+                            onPressed: isLoading ? null : registerUser,
+                            child: isLoading
+                                ? const CircularProgressIndicator(
+                              color: Colors.black,
+                            )
+                                : const Text(
                               "Register",
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // Already have an account?
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -146,8 +206,7 @@ class RegisterScreen extends StatelessWidget {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const LoginScreen(),
-                                  ),
+                                      builder: (_) => const LoginScreen()),
                                 );
                               },
                               child: const Text(
@@ -160,7 +219,7 @@ class RegisterScreen extends StatelessWidget {
                               ),
                             ),
                           ],
-                        ),
+                        )
                       ],
                     ),
                   ),
@@ -173,13 +232,14 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  // Reusable input field widget
   Widget _buildInputField({
+    required TextEditingController controller,
     required String label,
     required IconData icon,
     bool obscureText = false,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       style: const TextStyle(
         fontFamily: 'Poppins',

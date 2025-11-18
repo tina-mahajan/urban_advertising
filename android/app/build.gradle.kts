@@ -1,44 +1,64 @@
+// APP-LEVEL build.gradle.kts
+
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("org.jetbrains.kotlin.android")
+
+    // Flutter plugin
     id("dev.flutter.flutter-gradle-plugin")
+
+    // Firebase Google Services plugin
+    id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.urban_application"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+    compileSdk = 36
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.urban_application"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false    // keep code shrinking off
+            isShrinkResources = false  // <- ADD THIS LINE
         }
     }
+
 }
 
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Firebase BoM (manages versions automatically)
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    // Add this (along with your other firebase libs)
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    // Firebase libraries
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Optional Firebase services:
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
+}
+apply(plugin = "com.google.gms.google-services")

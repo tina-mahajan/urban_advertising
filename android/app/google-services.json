@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "287776463874",
+    "firebase_url": "https://urban-advertising-application-default-rtdb.firebaseio.com",
+    "project_id": "urban-advertising-application",
+    "storage_bucket": "urban-advertising-application.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:287776463874:android:50d50a466d094214da5b1b",
+        "android_client_info": {
+          "package_name": "com.example.urban_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwotVs8DyVfqN68fCVoNvGCSQZbLU4qqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

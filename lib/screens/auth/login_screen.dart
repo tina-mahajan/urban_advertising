@@ -1,18 +1,118 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:urban_advertising/core/theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:urban_advertising/screens/auth/register_screen.dart';
 import 'package:urban_advertising/home/home_screen.dart';
+import 'package:urban_advertising/Employee/screens/emp_home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  // -------------------------------------------------------
+  // 🔥 FIREBASE LOGIN FUNCTION
+  // -------------------------------------------------------
+  Future<void> loginUser() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      showMessage("Please enter email & password", Colors.red);
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      // 1️⃣ Login User
+      UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      String uid = userCredential.user!.uid;
+
+      // 2️⃣ Fetch User Details From Firestore
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection("Customer")
+          .doc(uid)
+          .get();
+
+      if (!userDoc.exists) {
+        setState(() => isLoading = false);
+        showMessage("User record not found in Firestore!", Colors.red);
+        return;
+      }
+
+      Map<String, dynamic> userData =
+      userDoc.data() as Map<String, dynamic>;
+
+      // 3️⃣ Save Data Locally (SharedPreferences)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString("uid", uid);
+      await prefs.setString("email", email);
+      await prefs.setString("userData", userDoc.data().toString());
+
+      // 4️⃣ Redirect Based on Role (default role = customer)
+      String role = userData["role"] ?? "customer";
+
+      if (role == "customer") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else if (role == "employee") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const EmployeeHomeScreen()),
+        );
+      } else if (role == "admin") {
+        Navigator.pushReplacementNamed(context, '/admin_dashboard');
+      }
+
+      setState(() => isLoading = false);
+
+    } on FirebaseAuthException catch (e) {
+      setState(() => isLoading = false);
+
+      String msg = "Login failed";
+
+      if (e.code == "user-not-found") msg = "User not found";
+      if (e.code == "wrong-password") msg = "Incorrect password";
+      if (e.code == "invalid-email") msg = "Invalid email format";
+
+      showMessage(msg, Colors.red);
+
+    } catch (e) {
+      setState(() => isLoading = false);
+      showMessage("Error: $e", Colors.red);
+    }
+  }
+
+  void showMessage(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
-        fit: StackFit.expand,
         children: [
           Container(
             decoration: const BoxDecoration(
@@ -23,6 +123,7 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
+
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -33,19 +134,14 @@ class LoginScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.white24, width: 1),
+                      border: Border.all(color: Colors.white24),
                     ),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // --- App Logo ---
-                        Image.asset(
-                          'assets/white.png',
-                          height: 80,
-                        ),
-                        const SizedBox(height: 16),
+                        Image.asset('assets/white.png', height: 80),
+                        const SizedBox(height: 20),
 
                         const Text(
                           "Welcome Back 👋",
@@ -55,64 +151,26 @@ class LoginScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Login to continue",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
+
                         const SizedBox(height: 30),
 
-                        // --- Email Field ---
                         TextField(
+                          controller: emailController,
                           style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: "Email Address",
-                            labelStyle: const TextStyle(color: Colors.white70),
-                            prefixIcon:
-                            const Icon(Icons.email, color: Colors.white70),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.05),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                              const BorderSide(color: Colors.white24),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.white),
-                            ),
-                          ),
+                          decoration: _inputStyle(
+                              "Email Address", Icons.email),
                         ),
                         const SizedBox(height: 20),
 
-                        // --- Password Field ---
                         TextField(
+                          controller: passwordController,
                           obscureText: true,
                           style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            labelStyle: const TextStyle(color: Colors.white70),
-                            prefixIcon:
-                            const Icon(Icons.lock, color: Colors.white70),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.05),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                              const BorderSide(color: Colors.white24),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.white),
-                            ),
-                          ),
+                          decoration:
+                          _inputStyle("Password", Icons.lock),
                         ),
                         const SizedBox(height: 30),
 
-                        // --- Login Button ---
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -123,15 +181,12 @@ class LoginScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomeScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
+                            onPressed: isLoading ? null : loginUser,
+                            child: isLoading
+                                ? const CircularProgressIndicator(
+                              color: Colors.black,
+                            )
+                                : const Text(
                               "Login",
                               style: TextStyle(
                                 color: Colors.black,
@@ -140,9 +195,9 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 20),
 
-                        // --- Register Link ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -155,9 +210,8 @@ class LoginScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                    const RegisterScreen(),
-                                  ),
+                                      builder: (_) =>
+                                      const RegisterScreen()),
                                 );
                               },
                               child: const Text(
@@ -167,98 +221,35 @@ class LoginScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
+                            )
                           ],
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        // -------------------------------
-                        //  Temporary Dashboard Buttons
-                        // -------------------------------
-                        const Text(
-                          "Login As (Temporary):",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        // User Dashboard
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white12,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/home');
-                            },
-                            child: const Text(
-                              "User Dashboard",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Employee Dashboard
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white12,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                  context, '/employee_dashboard');
-                            },
-                            child: const Text(
-                              "Employee Dashboard",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Admin Dashboard
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white12,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/admin_dashboard');
-                            },
-                            child: const Text(
-                              "Admin Dashboard",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
+                        )
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+          )
         ],
+      ),
+    );
+  }
+
+  InputDecoration _inputStyle(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIcon: Icon(icon, color: Colors.white70),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.05),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white24),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.white),
       ),
     );
   }

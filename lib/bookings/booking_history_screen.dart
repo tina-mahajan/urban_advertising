@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppColors {
   static const Color darkBackground = Color(0xFF141414);
@@ -18,22 +21,62 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  List<dynamic> upcoming = [];
+  List<dynamic> pending = [];
+  List<dynamic> history = [];
+
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    fetchBookings();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  Future<void> fetchBookings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString("token");
+
+    final response = await http.get(
+      Uri.parse("http://10.0.2.2:4000/api/bookings/my-bookings"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    print("BOOKING HISTORY = ${response.body}");
+
+    if (response.statusCode == 200) {
+      List data = jsonDecode(response.body)["bookings"];
+
+      setState(() {
+        upcoming =
+            data.where((b) => b['status'] == "confirmed" || b['status'] == "assigned").toList();
+        pending = data.where((b) => b['status'] == "pending").toList();
+        history = data.where((b) => b['status'] == "completed" || b['status'] == "cancelled").toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+    }
   }
 
-  Color _getStatusBackground(Color color) {
-
-    return color.withAlpha(38);
+  Color _statusColor(String status) {
+    switch (status) {
+      case "confirmed":
+      case "assigned":
+        return Colors.lightGreenAccent;
+      case "pending":
+        return Colors.orangeAccent;
+      case "completed":
+        return AppColors.primaryAccent;
+      case "cancelled":
+        return Colors.redAccent;
+      default:
+        return Colors.white;
+    }
   }
+
+  Color _getStatusBackground(Color color) => color.withAlpha(38);
 
   Widget bookingCard({
     required String date,
@@ -57,9 +100,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
             const SizedBox(height: 6),
             Text("Time: $time", style: const TextStyle(fontSize: 16, color: Colors.white)),
             const SizedBox(height: 6),
-            Text("Videographer: $name", style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
+            Text("Videographer: $name",
+                style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
             const SizedBox(height: 6),
-            Text("Phone: $phone", style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
+            Text("Phone: $phone",
+                style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -129,11 +174,6 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    const Color confirmedColor = Colors.lightGreenAccent;
-    const Color pendingColor = Colors.orangeAccent;
-    const Color completedColor = AppColors.primaryAccent;
-    const Color cancelledColor = Colors.redAccent;
-
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
@@ -153,61 +193,50 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
           ],
         ),
       ),
-      body: TabBarView(
+
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
+          : TabBarView(
         controller: _tabController,
         children: [
-          // Upcoming
+          // UPCOMING
           ListView(
-            children: [
-              bookingCard(
-                date: "10 Nov 2025",
-                time: "10:00 AM",
-                name: "Anurag Mate",
-                phone: "+91 7276188376",
-                statusText: "Confirmed",
-                statusColor: confirmedColor,
-              ),
-              bookingCard(
-                date: "12 Nov 2025",
-                time: "02:30 PM",
-                name: "Jayesh Chaudhari",
-                phone: "+91 7276188376",
-                statusText: "Confirmed",
-                statusColor: confirmedColor,
-              ),
-            ],
+            children: upcoming.map((b) {
+              return bookingCard(
+                date: b["date"],
+                time: b["slot_time"],
+                name: b["assigned_employee"] ?? "Not Assigned",
+                phone: "N/A",
+                statusText: b["status"],
+                statusColor: _statusColor(b["status"]),
+              );
+            }).toList(),
           ),
 
-          // Pending
+          // PENDING
           ListView(
-            children: [
-              bookingCard(
-                date: "15 Nov 2025",
-                time: "11:00 AM",
-                name: "Jayesh Chaudhari",
-                phone: "+91 9871112233",
+            children: pending.map((b) {
+              return bookingCard(
+                date: b["date"],
+                time: b["slot_time"],
+                name: "Waiting...",
+                phone: "N/A",
                 statusText: "Awaiting Confirmation",
-                statusColor: pendingColor,
-              ),
-            ],
+                statusColor: Colors.orangeAccent,
+              );
+            }).toList(),
           ),
 
-          // History
+          // HISTORY
           ListView(
-            children: [
-              historyCard(
-                date: "03 Nov 2025",
-                time: "03:00 PM",
-                statusText: "Completed",
-                statusColor: completedColor,
-              ),
-              historyCard(
-                date: "01 Nov 2025",
-                time: "09:30 AM",
-                statusText: "Cancelled",
-                statusColor: cancelledColor,
-              ),
-            ],
+            children: history.map((b) {
+              return historyCard(
+                date: b["date"],
+                time: b["slot_time"],
+                statusText: b["status"],
+                statusColor: _statusColor(b["status"]),
+              );
+            }).toList(),
           ),
         ],
       ),
