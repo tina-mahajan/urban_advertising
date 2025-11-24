@@ -121,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: Column(
                       children: [
-                        Image.asset('assets/white.png', height: 80),
+                        Image.asset('assets/white.png', height: 60),
                         const SizedBox(height: 20),
                         const Text(
                           "Create Account ✨",

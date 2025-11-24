@@ -8,6 +8,23 @@ class AppColors {
   static const Color textLight = Colors.white;
   static const Color textDark = Colors.black87;
 }
+class AppColors1 {
+  static const Color darkBackground = Color(0xFF0D1117);
+  static const Color cardBackground = Color(0xFF161B22);
+  static const Color primaryAccent = Color(0xFF8C00FF);
+  static const Color primaryAccentLight = Color(0xFF8A63D2);
+  static const Color secondaryAccent = Color(0xFF8C00FF);
+
+  static const Color textLight = Colors.white;
+  static const Color secondaryText = Color(0xFFC9D1D9);
+
+  static const Color success = Color(0xFF3FB950);
+  static const Color warning = Color(0xFFF9C850);
+  static const Color error = Color(0xFFFA6262);
+
+  static const Color divider = Color(0xFF30363D);
+  static const Color glow = Color(0xFF8A63D2);
+}
 
 final ThemeData appTheme = ThemeData(
   useMaterial3: true,

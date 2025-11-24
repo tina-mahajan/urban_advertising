@@ -1,10 +1,21 @@
-import 'dart:convert';
+//slot booking
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:urban_advertising/core/theme.dart';
 import 'package:urban_advertising/widgets/bottom_navbar.dart';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+
+// DARK THEME COLORS
+class AppColors {
+  static const Color darkBackground = Color(0xFF141414);
+  static const Color cardBackground = Color(0xFF1E1E1E);
+  static const Color primaryAccent = Color(0xFF8C00FF);
+  static const Color nav = Color(0xFF8C00FF);
+  static const Color secondaryText = Colors.white70;
+}
 
 class SlotBookingScreen extends StatefulWidget {
   const SlotBookingScreen({super.key});
@@ -28,58 +39,17 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
     return List.generate(7, (i) => DateTime.now().add(Duration(days: i)));
   }
 
-  String formatDateNum(DateTime d) => DateFormat('dd').format(d);
-  String formatDateMonth(DateTime d) => DateFormat('MMM').format(d);
-
-  // ==============================
-  // BOOKING API CALL
-  // ==============================
-  Future<void> createBooking() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString("token");
-
-    if (token == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Please login again.")));
-      return;
-    }
-
-    final response = await http.post(
-      Uri.parse("http://10.0.2.2:4000/api/bookings/create"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token"
-      },
-      body: jsonEncode({
-        "date": selectedDate.toIso8601String().split("T")[0],
-        "time_slot": selectedSlot,
-      }),
-    );
-
-    print("BOOKING RESPONSE = ${response.body}");
-
-    if (response.statusCode == 200) {
-      Navigator.pushNamed(context, '/booking_success');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Booking failed: ${response.body}")),
-      );
-    }
-  }
-
-  // ==============================
-  // UI
-  // ==============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.darkBackground,
+      extendBodyBehindAppBar: false,   // FIXED
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.black, // FIXED
         elevation: 0,
         title: const Text(
-          "Book a Slot",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'Book a Slot',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -90,220 +60,318 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
             padding: EdgeInsets.only(right: 16),
             child: CircleAvatar(
               radius: 18,
-              backgroundColor: AppColors.secondary,
+              backgroundColor: AppColors.primaryAccent,
               child: Icon(Icons.person, color: Colors.white),
             ),
           ),
         ],
       ),
 
-      // ==============================
-      // BODY
-      // ==============================
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // CURRENT PLAN CARD
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.accent.withOpacity(0.4)),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Current Plan: Standard plan (15 Videos)",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary)),
-                  SizedBox(height: 5),
-                  Text("You’ve posted 12 videos so far",
-                      style: TextStyle(color: AppColors.textDark)),
-                ],
-              ),
-            ),
-          ),
-
-          // Available Slots
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              "Available Slots",
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // DATE SELECTOR
-          SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: dates.length,
-              itemBuilder: (context, index) {
-                final date = dates[index];
-                final bool isSelected =
-                    date.day == selectedDate.day &&
-                        date.month == selectedDate.month &&
-                        date.year == selectedDate.year;
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedDate = date;
-                      selectedSlot = null;
-                    });
-                  },
-                  child: Container(
-                    width: 60,
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.accent),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(formatDateNum(date),
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.textDark)),
-                        Text(formatDateMonth(date),
-                            style: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.textDark)),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // SLOT CARDS
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListView.separated(
-                itemCount: slots.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final slot = slots[index];
-                  final isSelected = slot == selectedSlot;
-
-                  return GestureDetector(
-                    onTap: () => setState(() => selectedSlot = slot),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.accent,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          slot,
-                          style: TextStyle(
-                            color: AppColors.textDark,
-                            fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        trailing: Icon(
-                          isSelected
-                              ? Icons.check_circle
-                              : Icons.access_time,
-                          color:
-                          isSelected ? AppColors.primary : AppColors.accent,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // SUMMARY BOX
-          if (selectedSlot != null)
+      // SAFE AREA FIXES THE EXTRA TOP SPACE
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Current Plan Box — Fixed Spacing
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16.0),
               child: Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Selected Slot Summary",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary)),
-                    const SizedBox(height: 8),
-                    Text("Date: ${DateFormat('dd MMM').format(selectedDate)}",
-                        style: const TextStyle(color: AppColors.textDark)),
-                    Text("Time: $selectedSlot",
-                        style: const TextStyle(color: AppColors.textDark)),
-                    const Text("Duration: 2 Hours",
-                        style: TextStyle(color: AppColors.textDark)),
-                    const SizedBox(height: 3),
-                    const Text(
-                      "Minimum 4 videos required for each 2-hour slot.",
-                      style: TextStyle(color: Colors.black54, fontSize: 12),
+                    Text(
+                      'Current Plan: Standard plan (15 Videos)',
+                      style:
+                      TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      "You’ve posted 12 videos so far",
+                      style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
                     ),
                   ],
                 ),
               ),
             ),
 
-          // CONFIRM BUTTON
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: selectedSlot == null
-                    ? null
-                    : () {
-                  createBooking();
-                },
-                child: const Text("Confirm Booking"),
+            // Title
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Available Slots',
+                style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          const SizedBox(height: 16),
-        ],
+            // 📅 Date Selector
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: dates.length,
+                itemBuilder: (context, index) {
+                  final date = dates[index];
+                  final isSelected = date.day == selectedDate.day &&
+                      date.month == selectedDate.month &&
+                      date.year == selectedDate.year;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedDate = date;
+                        selectedSlot = null;
+                      });
+                    },
+                    child: Container(
+                      width: 60,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primaryAccent
+                            : AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primaryAccent
+                              : Colors.grey.shade700,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            DateFormat('dd').format(date),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('MMM').format(date),
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.secondaryText,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 🔹 SLOT LIST + EXPANDABLE SUMMARY
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: List.generate(slots.length, (index) {
+                      final slot = slots[index];
+                      final isSelected = slot == selectedSlot;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 280),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primaryAccent
+                                : Colors.grey.shade800,
+                            width: isSelected ? 1.4 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Slot Header
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => selectedSlot = slot),
+                              child: Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    slot,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                  Icon(
+                                    isSelected
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
+                                    color: Colors.white70,
+                                  )
+                                ],
+                              ),
+                            ),
+
+                            if (isSelected)
+                              AnimatedContainer(
+                                duration:
+                                const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                margin: const EdgeInsets.only(top: 14),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius:
+                                  BorderRadius.circular(14),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Selected Slot Summary",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 10),
+
+                                    Text(
+                                      "Date:  ${DateFormat('dd MMM').format(selectedDate)}",
+                                      style: const TextStyle(
+                                          color: Colors.white70),
+                                    ),
+                                    Text(
+                                      "Time:  $slot",
+                                      style: const TextStyle(
+                                          color: Colors.white70),
+                                    ),
+                                    const Text(
+                                      "Duration:  2 Hours",
+                                      style: TextStyle(
+                                          color: Colors.white70),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    const Text(
+                                      "Minimum 4 videos required for each 2-hour slot.",
+                                      style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+
+            // Confirm Button
+            Padding(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: selectedSlot == null ? null : () async {
+                    try {
+                      // Get user ID
+                      final prefs = await SharedPreferences.getInstance();
+                      String? uid = prefs.getString("uid");
+
+                      if (uid == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Login required")),
+                        );
+                        return;
+                      }
+
+                      // Fetch customer details
+                      final userDoc = await FirebaseFirestore.instance
+                          .collection("Customer")
+                          .doc(uid)
+                          .get();
+
+                      String customerName = userDoc["Customer_Name"] ?? "Unknown";
+
+                      // Save to Firestore
+                      await FirebaseFirestore.instance.collection("slot_request").add({
+                        "customer_id": uid,
+                        "customer_name": customerName,
+                        "date": DateFormat("dd MMM yyyy").format(selectedDate),
+                        "time": selectedSlot!,
+                        "service": "Daily Photo Shoot",   // or dynamic
+                        "message": "",
+                        "status": "pending",
+                        "created_at": Timestamp.now(),
+                      });
+
+                      // Navigate to success page
+                      Navigator.pushNamed(
+                        context,
+                        '/booking_success',
+                        arguments: {
+                          'time': selectedSlot!,
+                          'date': selectedDate,
+                        },
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error booking slot: $e")),
+                      );
+                    }
+                  },
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    disabledBackgroundColor:
+                    AppColors.primaryAccent.withAlpha(120),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'Confirm Booking',
+                    style:
+                    TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
 
-      // BOTTOM NAV BAR
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: 1,
         onTap: (i) {

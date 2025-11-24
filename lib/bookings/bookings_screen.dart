@@ -8,7 +8,7 @@ import 'booking_history_screen.dart';
 class AppColors {
   static const Color darkBackground = Color(0xFF141414);  // Primary dark background
   static const Color cardBackground = Color(0xFF1E1E1E);   // Dark card/surface color
-  static const Color primaryAccent = Color(0xFF5A00FF);   // Your main accent color (Purple/Blue)
+  static const Color primaryAccent = Color(0xFF8C00FF);   // Your main accent color (Purple/Blue)
   static const Color secondaryText = Colors.white70;       // Light grey text
 }
 // --- END Placeholder Colors ---

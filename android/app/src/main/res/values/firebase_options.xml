@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firebase_app_id">1:287776463874:android:50d50a466d094214da5b1b</string>
+    <string name="firebase_api_key">AIzaSyBKnNOkk1YcM5Dp0nbL-IsS7TlC341dzC0</string>
+    <string name="firebase_project_id">urban-advertising-application</string>
+    <string name="firebase_storage_bucket">urban-advertising-application.appspot.com</string>
+    <string name="gcm_defaultSenderId">287776463874</string>
+</resources>

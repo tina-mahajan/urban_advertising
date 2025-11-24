@@ -46,16 +46,28 @@ class _LoginScreenState extends State<LoginScreen> {
       String uid = userCredential.user!.uid;
 
       // 2️⃣ Fetch User Details From Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+      DocumentSnapshot userDoc;
+
+// First check Customer
+      userDoc = await FirebaseFirestore.instance
           .collection("Customer")
           .doc(uid)
           .get();
 
       if (!userDoc.exists) {
+        // If not found, check employee
+        userDoc = await FirebaseFirestore.instance
+            .collection("employee")
+            .doc(uid)
+            .get();
+      }
+
+      if (!userDoc.exists) {
         setState(() => isLoading = false);
-        showMessage("User record not found in Firestore!", Colors.red);
+        showMessage("User record not found!", Colors.red);
         return;
       }
+
 
       Map<String, dynamic> userData =
       userDoc.data() as Map<String, dynamic>;
@@ -140,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Column(
                       children: [
-                        Image.asset('assets/white.png', height: 80),
+                        Image.asset('assets/white.png', height: 60),
                         const SizedBox(height: 20),
 
                         const Text(

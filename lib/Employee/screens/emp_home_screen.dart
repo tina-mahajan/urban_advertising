@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:urban_advertising/Employee/widgets/bottom_navbar.dart';
 
-// --- Placeholder/Themed Colors ---
+import 'dart:math' as math;
+
+// Import the new theme file
+import 'package:urban_advertising/core/theme.dart';
+
+
 class AppColors {
-  static const Color darkBackground = Color(0xFF141414);
-  static const Color cardBackground = Color(0xFF1E1E1E);
-  static const Color primaryAccent = Color(0xFF5A00FF);     // Primary Purple/Blue accent
-  static const Color secondaryAccent = Color(0xFF00FFFF);  // Cyan for secondary actions
-  static const Color secondaryText = Colors.white70;
-  static const Color textLight = Colors.white;
-}
-// ---------------------------------
+  // Main Theme Colors
+  static const Color darkBackground = Color(0xFF0D1117);
+  static const Color cardBackground = Color(0xFF161B22);
+  static const Color primaryAccent = Color(0xFF6E40C2);
+  static const Color primaryAccentLight = Color(0xFF8A63D2);
+  static const Color secondaryAccent = Color(0xFF5CC8FF);
 
-// Dummy Data Models (Updated with Growth/Request data)
+  // Text
+  static const Color textLight = Colors.white;
+  static const Color secondaryText = Color(0xFFC9D1D9);
+
+  // Status
+  static const Color success = Color(0xFF3FB950);
+  static const Color warning = Color(0xFFFAC85E);
+  static const Color error = Color(0xFFFACA62);
+  static const Color errors = Color(0xFFFF0000);
+
+  // UI Elements
+  static const Color divider = Color(0xFF30363D);
+  static const Color glow = Color(0xFF8A63D2);
+}
+
 class EmployeeBooking {
   final String time;
   final String clientName;
@@ -28,6 +48,15 @@ class EmployeeBooking {
   });
 }
 
+class CarouselItem {
+  final String title;
+  final String subtitle;
+  final Color color;
+  final IconData icon;
+
+  CarouselItem({required this.title, required this.subtitle, required this.color, required this.icon});
+}
+
 class EmployeeHomeScreen extends StatefulWidget {
   const EmployeeHomeScreen({super.key});
 
@@ -36,360 +65,441 @@ class EmployeeHomeScreen extends StatefulWidget {
 }
 
 class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
-  // Sample data for Today's schedule
-  final List<EmployeeBooking> todaySchedule = [
-    EmployeeBooking(
-        time: '10:00 AM - 12:00 PM',
-        clientName: 'Sangam Collection',
-        location: 'Bhosari',
-        projectType: 'Daily Shoot'),
-    // ... other bookings
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchEmployeeData();
+  }
 
-  // Dummy data for Growth and Requests
+  String employeeName = "";
+  String employeeEmail = "";
+  bool isLoading = false;
+
+  Future<void> fetchEmployeeData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? uid = prefs.getString("uid");
+
+      if (uid == null) return;
+
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection("employee")
+          .doc(uid)
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          employeeName = doc["name"] ?? "";
+          employeeEmail = doc["email"] ?? "";
+        });
+      }
+
+    } catch (e) {
+      print("Error fetching employee data: $e");
+    }
+  }
+
   final int completedProjectsMonth = 18;
   final int targetProjectsMonth = 25;
   final int newRequestsCount = 3;
+
+  final List<EmployeeBooking> todaySchedule = [
+    EmployeeBooking(
+      time: '10:00 AM',
+      clientName: 'Sangam Collection',
+      location: 'Bhosari, Pune',
+      projectType: 'Daily Photo Shoot',
+    ),
+    EmployeeBooking(
+      time: '04:00 PM',
+      clientName: 'Client Review Meeting',
+      location: 'Office Meeting Room',
+      projectType: 'Project Planning',
+    ),
+  ];
+
+  final List<CarouselItem> carouselItems = [
+    CarouselItem(
+      title: "Weekly Focus",
+      subtitle: "Finish 5 Video Edits",
+      color: Colors.blueAccent,
+      icon: Icons.lightbulb_outline,
+    ),
+    CarouselItem(
+      title: "Hit Your Target!",
+      subtitle: "7 more projects",
+      color: AppColors.primaryAccent,
+      icon: Icons.rocket_launch,
+    ),
+    CarouselItem(
+      title: "Creative Corner",
+      subtitle: "Review guidelines",
+      color: AppColors.success,
+      icon: Icons.design_services,
+    ),
+  ];
+
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
+
+      // ---------------- APP BAR ----------------
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.darkBackground,
         elevation: 0,
-        title: const Text(
-          'Employee Dashboard',
-          style: TextStyle(color: AppColors.textLight, fontWeight: FontWeight.bold),
+        centerTitle: false,
+        title: Text(
+          'Hello!, ${employeeName.isNotEmpty ? employeeName.split(" ").first : ""}',
+          style: const TextStyle(
+            color: AppColors.textLight,
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person, color: AppColors.textLight),
+            icon: const Icon(Icons.notifications_none_rounded,
+                color: AppColors.secondaryText, size: 28),
             onPressed: () {},
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: AppColors.primaryAccent,
+              child: Text(
+                employeeName.isNotEmpty ? employeeName[0] : "?",
+                style: const TextStyle(
+                    color: AppColors.textLight, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+
+      // ---------------- FAB ----------------
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {},
+        label: const Text('Mark Attendance', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.fingerprint_rounded),
+        backgroundColor: AppColors.primaryAccentLight,
+        foregroundColor: AppColors.textLight,
+      ),
+
+      // ✅ ADD NAVBAR HERE INSIDE SCAFFOLD
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+
+          switch (index) {
+            case 0:
+              break;
+            case 1:
+              Navigator.pushNamed(context, "/emp_slots");
+              break;
+            case 2:
+              Navigator.pushNamed(context, "/clients");
+              break;
+            case 3:
+              Navigator.pushNamed(context, "/employee_profile");
+              break;
+          }
+        },
+      ),
+      // ---------------- BODY ----------------
+      body: isLoading
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryAccentLight))
+          : SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. Welcome & Stats Card ---
-            _buildWelcomeCard(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-            // --- 2. Growth Overview Card (NEW) ---
-            _buildGrowthOverviewCard(),
-            const SizedBox(height: 20),
-
-            // --- 3. New Requests Card (NEW) ---
-            if (newRequestsCount > 0)
-              _buildNewRequestsCard(),
-            const SizedBox(height: 20),
-
-            // --- 4. Quick Actions ---
-            _buildSectionHeader('Quick Actions'),
-            _buildQuickActionsGrid(context),
+            // CAROUSEL
+            _buildCarousel(),
             const SizedBox(height: 25),
 
-            // --- 5. Today's Schedule ---
-            _buildSectionHeader("Today's Schedule (${_getTodayDate()})"),
-            _buildScheduleList(),
+            // MONTHLY PERFORMANCE
+            _buildSectionHeader('Monthly Performance'),
+            const SizedBox(height: 15),
+            _buildStatsGrid(),
             const SizedBox(height: 30),
+
+            // NEW REQUESTS
+            if (newRequestsCount > 0) _buildNewRequestsCard(),
+            const SizedBox(height: 30),
+
+            // QUICK ACTIONS
+            _buildSectionHeader("Quick Actions"),
+            const SizedBox(height: 15),
+            _buildQuickActionsGrid(context),
+            const SizedBox(height: 30),
+
+            // TODAY'S SCHEDULE
+            _buildSectionHeader("Today's Schedule (${_getTodayDate()})"),
+            const SizedBox(height: 15),
+            _buildScheduleList(),
+            const SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
 
-  // --- NEW Widget Builders ---
 
-  Widget _buildGrowthOverviewCard() {
-    double progress = completedProjectsMonth / targetProjectsMonth;
-    if (progress > 1.0) progress = 1.0;
+  // ---------------- CAROUSEL ----------------
+  Widget _buildCarousel() {
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: carouselItems.length,
+        itemBuilder: (context, index) {
+          final item = carouselItems[index];
+          return Container(
+            width: 250,
+            margin: EdgeInsets.only(right: 15),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: item.color.withOpacity(0.5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(item.icon, color: item.color, size: 22),
+                    const SizedBox(width: 8),
+                    Text(item.title,
+                        style: TextStyle(color: item.color, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(item.subtitle,
+                    style: const TextStyle(color: AppColors.textLight, fontSize: 16)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
+  // ---------------- SECTION HEADER ----------------
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: AppColors.textLight,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  // ---------------- STATS GRID ----------------
+  Widget _buildStatsGrid() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildStatCard('Projects Done', '$completedProjectsMonth',
+                Icons.check_circle_outline, AppColors.primaryAccent)),
+            const SizedBox(width: 15),
+            Expanded(child: _buildStatCard('Monthly Target', '$targetProjectsMonth',
+                Icons.track_changes_outlined, AppColors.secondaryAccent)),
+          ],
+        ),
+        const SizedBox(height: 15),
+        _buildProgressCard(),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.secondaryAccent.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(value, style: const TextStyle(color: AppColors.textLight, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(color: AppColors.secondaryText.withOpacity(0.7), fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- PROGRESS CARD ----------------
+  Widget _buildProgressCard() {
+    double progress = completedProjectsMonth / targetProjectsMonth;
+    if (progress > 1.0) progress = 1.0;
+    int percentage = (progress * 100).toInt();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+
+        // 🔥 Futuristic Neon Gradient
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF6E40C2),        // Deep Purple
+            Color(0xFF8A63D2),        // Light Purple
+            Color(0xFF5CC8FF),        // Cyan Blue
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+
+        // Glow shadow
         boxShadow: [
           BoxShadow(
-            color: AppColors.secondaryAccent.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.primaryAccent.withOpacity(0.4),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Monthly Growth Goal',
-                style: TextStyle(
-                  color: AppColors.textLight,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            children: const [
               Text(
-                '${(progress * 100).toInt()}%',
+                'Progress',
                 style: TextStyle(
-                  color: AppColors.secondaryAccent,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
+              Icon(Icons.trending_up, color: Colors.white, size: 30),
             ],
           ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: AppColors.secondaryText.withOpacity(0.2),
-            color: AppColors.secondaryAccent,
-            minHeight: 8,
-            borderRadius: BorderRadius.circular(4),
+
+          const SizedBox(height: 12),
+
+          // Main Number
+          Text(
+            '$percentage%',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 48,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Completed: $completedProjectsMonth',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 14,
-                ),
+
+          const SizedBox(height: 12),
+
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 12,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Colors.white,
               ),
-              Text(
-                'Target: $targetProjectsMonth',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 14,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
+
+  // ---------------- NEW REQUESTS CARD ----------------
   Widget _buildNewRequestsCard() {
-    return InkWell(
-      onTap: () {
-        // Navigate to the unassigned requests screen
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.primaryAccent.withOpacity(0.2), // Use primary accent for alert
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: AppColors.primaryAccent, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.assignment_late, color: AppColors.primaryAccent, size: 30),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$newRequestsCount New Project Requests',
-                    style: const TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tap to review and assign tasks immediately.',
-                    style: TextStyle(
-                      color: AppColors.secondaryText,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.textLight, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Existing Widget Builders (Kept for completeness) ---
-
-  String _getTodayDate() {
-    final now = DateTime.now();
-    return '${now.day} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][now.month - 1]} ${now.year}';
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: AppColors.textLight,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Poppins',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.primaryAccent.withOpacity(0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.warning),
       ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Welcome back, Trupti!',
-            style: TextStyle(
-              color: AppColors.textLight,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+          const Icon(Icons.assignment_late, color: AppColors.warning, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '$newRequestsCount New Project Requests',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
-          SizedBox(height: 12),
-          Text(
-            'Active Projects: 4 pending submissions',
-            style: TextStyle(
-              color: AppColors.secondaryText,
-              fontSize: 14,
-            ),
-          ),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Attendance Status:',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 14,
-                ),
-              ),
-              Chip(
-                backgroundColor: Color(0xFF333333),
-                side: BorderSide(color: Colors.green, width: 1),
-                label: Text(
-                  'On Shift',
-                  style: TextStyle(
-                    color: Colors.lightGreenAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const Icon(Icons.arrow_forward_ios, color: Colors.white),
         ],
       ),
     );
   }
 
+  // ---------------- QUICK ACTIONS ----------------
   Widget _buildQuickActionsGrid(BuildContext context) {
-    return GridView.count(
+    final actions = [
+      {'label': 'Upload Data', 'icon': Icons.cloud_upload, 'color': AppColors.primaryAccent},
+      {'label': 'Project Queue', 'icon': Icons.assignment_turned_in, 'color': AppColors.secondaryAccent},
+      {'label': 'Report Prob', 'icon': Icons.bug_report, 'color': AppColors.error},
+      {'label': 'Resources', 'icon': Icons.folder_open, 'color': Colors.amber},
+      {'label': 'Help & FAQ', 'icon': Icons.help_outline, 'color': Colors.cyan},
+      {'label': 'Team Chat', 'icon': Icons.chat_bubble_outline, 'color': Colors.pinkAccent},
+    ];
+
+    return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.5,
-      children: [
-        _buildActionButton(
-          icon: Icons.upload_file,
-          label: 'Upload Data',
-          color: AppColors.primaryAccent,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening file upload tool...')),
-            );
-          },
-        ),
-        _buildActionButton(
-          icon: Icons.assignment,
-          label: 'Project Queue',
-          color: AppColors.secondaryAccent,
-          onTap: () {},
-        ),
-        _buildActionButton(
-          icon: Icons.bug_report,
-          label: 'Report Problem',
-          color: Colors.redAccent,
-          onTap: () {},
-        ),
-        _buildActionButton(
-          icon: Icons.folder_open,
-          label: 'Resources',
-          color: Colors.orangeAccent,
-          onTap: () {},
-        ),
-      ],
+      itemCount: actions.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3, crossAxisSpacing: 12, mainAxisSpacing: 12),
+      itemBuilder: (context, index) {
+        final a = actions[index];
+        return _buildActionButton(
+          a['icon'] as IconData,
+          a['label'] as String,
+          a['color'] as Color,
+        );
+      },
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildActionButton(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 10),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)),
+        ],
       ),
     );
   }
 
+  // ---------------- SCHEDULE LIST ----------------
   Widget _buildScheduleList() {
     return ListView.builder(
       shrinkWrap: true,
@@ -399,177 +509,87 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         final booking = todaySchedule[index];
         final isCompleted = booking.isCompleted;
 
+        final borderColor = isCompleted ? AppColors.success : AppColors.secondaryAccent;
+
         return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(18),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isCompleted
-                  ? Colors.greenAccent.withOpacity(0.4)
-                  : AppColors.primaryAccent.withOpacity(0.4),
-              width: 1.3,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isCompleted
-                    ? Colors.greenAccent.withOpacity(0.12)
-                    : AppColors.primaryAccent.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: isCompleted ? AppColors.success.withOpacity(0.07) : AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor.withOpacity(0.3)),
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Row: Time + Status Icon
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Time Marker
+              Column(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.access_time,
-                          color: AppColors.secondaryAccent, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        booking.time,
-                        style: const TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Chip(
-                    backgroundColor: isCompleted
-                        ? Colors.green.withOpacity(0.2)
-                        : Colors.yellow.withOpacity(0.15),
-                    side: BorderSide(
-                      color: isCompleted ? Colors.green : Colors.yellowAccent,
-                      width: 0.8,
-                    ),
-                    label: Text(
-                      isCompleted ? 'Completed' : 'Pending',
-                      style: TextStyle(
-                        color:
-                        isCompleted ? Colors.greenAccent : Colors.redAccent,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
+                  Text(booking.time,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Container(
+                    width: 3,
+                    height: 40,
+                    margin: const EdgeInsets.only(top: 5),
+                    color: borderColor,
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(width: 15),
 
-              // Client Info
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.person_outline,
-                      color: AppColors.secondaryText, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      booking.clientName,
-                      style: const TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-
-              // Location Info
-              Row(
-                children: [
-                  const Icon(Icons.location_on_outlined,
-                      color: Colors.orangeAccent, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      booking.location,
-                      style: const TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-
-              // Project Type Info
-              Row(
-                children: [
-                  const Icon(Icons.work_outline,
-                      color: AppColors.primaryAccent, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      booking.projectType,
-                      style: const TextStyle(
-                        color: AppColors.secondaryText,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Action Buttons
-              if (!isCompleted)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+              // Main Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Request confirmed.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.check_circle_outline,
-                          color: Colors.greenAccent, size: 18),
-                      label: const Text(
-                        'Mark Done',
+                    Text(booking.clientName,
                         style: TextStyle(
-                          color: Colors.greenAccent,
-                          fontWeight: FontWeight.w600,
+                          color: isCompleted ? AppColors.success : Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          decoration: isCompleted ? TextDecoration.lineThrough : null,
+                        )),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.work_outline, color: AppColors.primaryAccent, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            booking.projectType,
+                            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Reschedule option coming soon.'),
-                            duration: Duration(seconds: 2),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, color: Colors.orangeAccent, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            booking.location,
+                            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.schedule,
-                          color: Colors.yellowAccent, size: 18),
-                      label: const Text(
-                        'Reschedule',
-                        style: TextStyle(
-                          color: Colors.yellowAccent,
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+
+              // Status
+              Chip(
+                backgroundColor: isCompleted ? AppColors.success.withOpacity(0.2) : AppColors.warning.withOpacity(0.2),
+                label: Text(
+                  isCompleted ? 'Done' : 'Pending',
+                  style: TextStyle(
+                      color: isCompleted ? AppColors.success : AppColors.errors,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11),
+                ),
+              ),
             ],
           ),
         );
@@ -577,4 +597,12 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
     );
   }
 
+  // ---------------- DATE ----------------
+  String _getTodayDate() {
+    final now = DateTime.now();
+    return '${now.day} ${[
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ][now.month - 1]} ${now.year}';
+  }
 }

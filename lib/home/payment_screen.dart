@@ -98,7 +98,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     onPressed: selectedPayment == null
                         ? null
                         : () {
-                      Navigator.pushNamed(context, '/success');
+                      Navigator.pushNamed(
+                        context,
+                        '/success',
+                        arguments: {
+                          'planName': widget.planName,
+                          'planPrice': widget.planPrice,
+                          'userName': 'Unknown User',  // Replace with real user name if needed
+                          'paymentDate': DateTime.now().toString(),
+                        },
+                      );
+
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: selectedPayment == null
@@ -123,7 +133,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: selectedPayment == null
+                        ? null
+                        : () {
+                      Navigator.pushNamed(
+                        context,
+                        '/success',
+                        arguments: {
+                          'planName': widget.planName,
+                          'planPrice': widget.planPrice,
+                          // 'userName': 'User',  // Put actual user name if stored
+                          // 'paymentDate': DateTime.now().toString(),
+                        },
+                      );
+                    },
+
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white),
                       padding: const EdgeInsets.symmetric(vertical: 14),

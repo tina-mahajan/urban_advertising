@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppColors {
   static const Color darkBackground = Color(0xFF141414);
   static const Color cardBackground = Color(0xFF1E1E1E);
-  static const Color primaryAccent = Color(0xFF5A00FF);
+  static const Color primaryAccent = Color(0xFF8C00FF);
   static const Color secondaryText = Colors.white70;
 }
 

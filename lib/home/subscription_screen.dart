@@ -1,16 +1,15 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:urban_advertising/home/payment_screen.dart';
 import '../widgets/bottom_navbar.dart';
+import '';
 
 class AppColors {
-  static const Color primaryAccent = Color(0xFF3A3A3A);
-  static const Color secondaryAccent = Color(0xFFD0D337);
-  static const Color cardSurface = Color(0xFF1B1B1B);
-  static const Color darkBackground = Color(0xFF0A0A0A);
-  static const Color textLight = Colors.white;
-  static const Color textMuted = Colors.white70;
-  static const Color checkIcon = Color(0xFFFFFFFF);
+  static const Color bg = Color(0xFF0A0A0A);
+  static const Color card = Color(0xFF1A1A1A);
+  static const Color accent = Color(0xFF8C00FF);
+  static const Color accent2 = Color(0xFFB100FF);
+  static const Color text = Colors.white;
+  static const Color muted = Colors.white70;
+  static const Color tagBg = Color(0xFF3A008C);
 }
 
 class SubscriptionScreen extends StatefulWidget {
@@ -21,340 +20,373 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  int? hoveredIndex;
-  int currentIndex = 2; // Plans tab selected by default
+  int selectedTab = 0;
+  int? expandedIndex;
+  int bottomIndex = 2;
 
-  final plans = [
+  final List<Map<String, dynamic>> plans = [
     {
       'title': 'Basic Plan',
-      'price': '₹9,999/- (Per Month)',
-      'icon': Icons.trending_up_outlined,
+      'price': '₹9,999 / month',
+      'short': '10 shoots + Editing',
+      'icon': Icons.star_border_rounded,
+      'tag': 'Starter', // The 'tag' data is still here if you want to use it elsewhere
       'features': [
-        {'icon': Icons.videocam_outlined, 'text': '10 video shoots', 'highlight': true},
-        {'icon': Icons.video_call_outlined, 'text': 'Professional video editing'},
-        {'icon': Icons.replay_outlined, 'text': '1 revision per video', 'highlight': true},
-        {'icon': Icons.change_circle_outlined, 'text': '1 change allowed after final delivery'},
+        "10 Professional Video Shoots",
+        "Editing Included",
+        "1 Revision Per Video",
+        "1 Final Change Allowed",
       ],
     },
     {
       'title': 'Growth Plan',
-      'price': '₹14,999/- (Per Month)',
-      'icon': Icons.slow_motion_video_outlined,
+      'price': '₹14,999 / month',
+      'short': '15 Shoots + Social Posting',
+      'icon': Icons.auto_graph_rounded,
+      'tag': 'Most Popular',
       'features': [
-        {'icon': Icons.videocam_outlined, 'text': '15 video shoots', 'highlight': true},
-        {'icon': Icons.video_settings_outlined, 'text': 'Professional editing'},
-        {'icon': Icons.repeat_on_outlined, 'text': '3 revision per video', 'highlight': true},
-        {'icon': Icons.cached_outlined, 'text': '2 changes allowed after delivery per video', 'highlight': true},
-        {'icon': Icons.share_outlined, 'text': 'Social media posting support'},
-        {'icon': Icons.brush_outlined, 'text': 'Logo generation (if required)'},
+        "15 Premium Shoots",
+        "Premium Editing",
+        "2 Revisions Per Video",
+        "Social Media Posting",
+        "2 Final Change Allowed",
+        "Logo Generation",
       ],
     },
     {
       'title': 'Premium Plan',
-      'price': '₹24,999/- (Per Month)',
-      'icon': Icons.diamond_outlined,
+      'price': '₹24,999 / month',
+      'short': '30 Shoots + Creative Team',
+      'icon': Icons.diamond_rounded,
+      'tag': 'Best Value',
       'features': [
-        {'icon': Icons.videocam_outlined, 'text': '30 video shoots', 'highlight': true},
-        {'icon': Icons.star_outline, 'text': 'Premium editing'},
-        {'icon': Icons.change_circle_outlined, 'text': '3 changes allowed after delivery', 'highlight': true},
-        {'icon': Icons.calendar_month_outlined, 'text': 'Daily posting support'},
-        {'icon': Icons.design_services_outlined, 'text': '7 creative posters per month', 'highlight': true},
-        {'icon': Icons.edit_note_outlined, 'text': 'Script + content planning'},
-        {'icon': Icons.smart_toy_outlined, 'text': '1 AI generated Video', 'highlight': true},
-        {'icon': Icons.brush_outlined, 'text': 'Logo generation (if required)'},
-        {'icon': Icons.support_agent_outlined, 'text': '24/7 priority support', 'highlight': true},
-        {'icon': Icons.branding_watermark_outlined, 'text': 'Brand guideline support'},
+        "30 Premium Shoots",
+        "Premium Editing",
+        "7 Creatives (Posters)",
+        "Script + Content Planning",
+        "Daily Posting Support",
+        "Priority 24/7 Support",
+        "1 AI Generated Video",
+        "2 Final Change Allowed",
+        "Brand Guideline Support",
       ],
     },
   ];
 
-  void onTap(int index) {
-    setState(() => currentIndex = index);
+  void handleBottomTap(int i) {
+    setState(() => bottomIndex = i);
 
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/slot_booking');
-        break;
-      case 2:
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-    }
+    if (i == 0) Navigator.pushReplacementNamed(context, '/home');
+    if (i == 1) Navigator.pushReplacementNamed(context, '/slot_booking');
+    if (i == 2) return;
+    if (i == 3) Navigator.pushReplacementNamed(context, '/profile');
   }
+
+  void _navigateToPayment(String planTitle) {
+    // ... old navigation logic ...
+    Navigator.pushNamed(context, '/payment_screen');
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.bg,
         elevation: 0,
         title: const Text(
-          'Our Plans',
+          "Our Packages",
           style: TextStyle(
-            color: AppColors.textLight,
+            color: AppColors.text,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
-            letterSpacing: 1.2,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: AppColors.textLight),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.darkBackground, Color(0xFF1A1A1A)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.text),
+          onPressed: () => Navigator.pop(context),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 100, left: 16, right: 16, bottom: 30),
-          child: Column(
-            children: List.generate(plans.length, (index) {
-              final plan = plans[index];
+      ),
 
-              return TweenAnimationBuilder(
-                tween: Tween<double>(begin: 0, end: 1),
-                duration: Duration(milliseconds: 500 + (index * 200)),
-                builder: (context, double value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - value) * 40),
-                      child: child,
-                    ),
-                  );
-                },
-                child: MouseRegion(
-                  onEnter: (_) => setState(() => hoveredIndex = index),
-                  onExit: (_) => setState(() => hoveredIndex = null),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    margin: const EdgeInsets.only(bottom: 30),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: hoveredIndex == index
-                            ? AppColors.secondaryAccent
-                            : AppColors.primaryAccent.withOpacity(0.4),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: hoveredIndex == index
-                              ? AppColors.secondaryAccent.withOpacity(0.35)
-                              : AppColors.primaryAccent.withOpacity(0.15),
-                          blurRadius: hoveredIndex == index ? 25 : 10,
-                          spreadRadius: hoveredIndex == index ? 3 : 1,
-                          offset: const Offset(0, 6),
-                        ),
+      // ----------------------------------------------------------
+      // BODY
+      // ----------------------------------------------------------
+      body: Column(
+        children: [
+          // TOP TOGGLE BUTTONS
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Row(
+                children: [
+                  _tabButton("Monthly", 0),
+                  _tabButton("Yearly", 1),
+                ],
+              ),
+            ),
+          ),
+
+          // PLAN LIST
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: plans.length,
+              itemBuilder: (context, index) {
+                final plan = plans[index];
+                final isExpanded = expandedIndex == index;
+                // final isMostPopular = plan['tag'] == 'Most Popular';
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.card,
+                        isExpanded
+                            ? AppColors.accent.withAlpha(38)
+                            : AppColors.card
+
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                            child: Container(
-                              color: AppColors.cardSurface.withOpacity(0.8),
-                            ),
-                          ),
-                        ),
+                    border: Border.all(
+                      color: isExpanded ? AppColors.accent : const Color(0x1AFFFFFF),
+                      // width: isExpanded || isMostPopular ? 2.0 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isExpanded
+                            ? AppColors.accent.withAlpha(89)
+                            : Colors.black.withAlpha(76),
+                        // blurRadius: isExpanded || isMostPopular ? 18 : 10,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
 
-                        // 🔸 Faint background icon (new addition)
-                        Positioned(
-                          right: 12,
-                          top: 12,
-                          child: Icon(
-                            plan['icon'] as IconData,
-                            size: 100,
-                            color: Colors.white.withOpacity(0.05),
-                          ),
-                        ),
-
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            height: 3,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: hoveredIndex == index
-                                    ? [AppColors.secondaryAccent, AppColors.primaryAccent]
-                                    : [Colors.transparent, Colors.transparent],
-                              ),
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PaymentScreen(
-                                  planName: plan['title'] as String,
-                                  planPrice: plan['price'] as String,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ---- HEADER (Tap to expand)
+                      InkWell(
+                        onTap: () =>
+                            setState(() => expandedIndex = isExpanded ? null : index),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 1. PLAN ICON
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: AppColors.accent.withAlpha(51),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.accent.withAlpha(38),
+                                        blurRadius: 8,
+                                      )
+                                    ]
+                                ),
+                                child: Icon(
+                                  plan['icon'],
+                                  color: AppColors.accent,
+                                  size: 26,
                                 ),
                               ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                              const SizedBox(width: 14),
+
+                              // 2. TITLE + SHORT DETAILS (Now takes all available space)
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(
-                                      Icons.star,
-                                      color: AppColors.textLight,
-                                      size: 22,
-                                    ),
-                                    const SizedBox(width: 10),
+                                    // Title now has maximum horizontal space
                                     Text(
-                                      plan['title'] as String,
+                                      plan['title'],
                                       style: const TextStyle(
-                                        color: AppColors.textLight,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Poppins',
-                                        letterSpacing: 1.1,
+                                        color: AppColors.text,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    // Short description only
+                                    Text(
+                                      plan['short'],
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  plan['price'] as String,
-                                  style: const TextStyle(
-                                    color: AppColors.secondaryAccent,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.1,
-                                    fontFamily: 'Poppins',
+                              ),
+
+                              // 3. PRICE + ARROW (Fixed width, but now has more flexibility)
+                              SizedBox(
+                                width: 95,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      plan['price'],
+                                      style: const TextStyle(
+                                        color: AppColors.text,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Icon(
+                                      isExpanded
+                                          ? Icons.keyboard_arrow_up_rounded
+                                          : Icons.keyboard_arrow_down_rounded,
+                                      size: 28,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // ---- EXPANDED AREA
+                      AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 300),
+                        crossFadeState: isExpanded
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        firstChild: const SizedBox.shrink(),
+                        secondChild: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...List.generate(
+                                plan['features'].length,
+                                    (i) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle_outline,
+                                          color: AppColors.accent, size: 18),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          plan['features'][i],
+                                          style: const TextStyle(
+                                            color: AppColors.muted,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
-                                Divider(
-                                  color: AppColors.primaryAccent.withOpacity(0.5),
-                                  height: 20,
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: (plan['features'] as List).map((feature) {
-                                    final f = feature as Map<String, dynamic>;
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            f['icon'] as IconData? ?? Icons.check,
-                                            color: AppColors.checkIcon,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              f['text'] as String,
-                                              style: TextStyle(
-                                                fontFamily: 'Poppins',
-                                                color: f['highlight'] == true
-                                                    ? AppColors.secondaryAccent
-                                                    : AppColors.textMuted,
-                                                fontSize: 15,
-                                                height: 1.4,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  // Inside SubscriptionScreen's ElevatedButton onPressed:
+
+                                  onPressed: () {
+                                    // Navigate using the defined route name, passing arguments as a map
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/payment_screen', // This matches the key in main.dart
+                                      arguments: {
+                                        'planName': plan['title'] as String,
+                                        'planPrice': plan['price'] as String,
+                                      },
                                     );
-                                  }).toList(),
-                                ),
-                                const SizedBox(height: 20),
-                                Center(
-                                  child: AnimatedScale(
-                                    duration: const Duration(milliseconds: 250),
-                                    scale: hoveredIndex == index ? 1.08 : 1.0,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(30),
-                                        boxShadow: [
-                                          if (hoveredIndex == index)
-                                            BoxShadow(
-                                              color: AppColors.secondaryAccent.withOpacity(0.4),
-                                              blurRadius: 12,
-                                              spreadRadius: 2,
-                                            ),
-                                        ],
-                                      ),
-                                      child: OutlinedButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => PaymentScreen(
-                                                planName: plan['title'] as String,
-                                                planPrice: plan['price'] as String,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          side: BorderSide(
-                                            color: AppColors.secondaryAccent,
-                                            width: hoveredIndex == index ? 2 : 1.2,
-                                          ),
-                                          backgroundColor: hoveredIndex == index
-                                              ? AppColors.secondaryAccent.withOpacity(0.1)
-                                              : Colors.transparent,
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 12, horizontal: 30),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(30),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Upgrade Now',
-                                          style: TextStyle(
-                                            color: AppColors.textLight,
-                                            fontFamily: 'Poppins',
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 18,
-                                            letterSpacing: 1.1,
-                                          ),
-                                        ),
-                                      ),
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.accent,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    elevation: 5,
+                                  ),
+                                  child: const Text(
+                                    "Choose Plan",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+
+      // BOTTOM NAVBAR
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: bottomIndex,
+        onTap: handleBottomTap,
+      ),
+    );
+  }
+
+  // ----------------------------------------------------------
+  // TOGGLE BUTTON WIDGET
+  // ----------------------------------------------------------
+  Widget _tabButton(String title, int index) {
+    final isSelected = selectedTab == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedTab = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(40),
+            border: isSelected ? Border.all(color: AppColors.accent, width: 1.5) : null,
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: currentIndex,
-        onTap: onTap,
       ),
     );
   }
