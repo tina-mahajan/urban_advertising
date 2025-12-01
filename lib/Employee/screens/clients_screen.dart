@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:urban_advertising/Employee/widgets/bottom_navbar.dart';
 
 class ClientsScreen extends StatelessWidget {
   const ClientsScreen({super.key});
@@ -23,10 +24,10 @@ class ClientsScreen extends StatelessWidget {
         ),
       ),
 
+      // =========================== BODY ===========================
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection("Customer").snapshots(),
         builder: (context, snapshot) {
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Colors.purpleAccent),
@@ -77,7 +78,7 @@ class ClientsScreen extends StatelessWidget {
                     border: Border.all(color: Colors.white12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withOpacity(0.25),
                         blurRadius: 6,
                         offset: const Offset(0, 3),
                       ),
@@ -96,7 +97,7 @@ class ClientsScreen extends StatelessWidget {
                             ? NetworkImage(data["avatar_url"])
                             : null,
                         child: (data["avatar_url"] == null ||
-                            data["avatar_url"] == "")
+                            data["avatar_url"].toString().isEmpty)
                             ? const Icon(Icons.person,
                             color: Colors.white, size: 40)
                             : null,
@@ -172,6 +173,17 @@ class ClientsScreen extends StatelessWidget {
               );
             },
           );
+        },
+      ),
+
+      // ======================= BOTTOM NAVBAR =======================
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 2,
+        onTap: (i) {
+          if (i == 0) Navigator.pushNamed(context, '/emp_home');
+          if (i == 1) Navigator.pushNamed(context, '/emp_slots');
+          if (i == 2) return;
+          if (i == 3) Navigator.pushNamed(context, '/employee_profile');
         },
       ),
     );

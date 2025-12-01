@@ -55,16 +55,22 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.primaryAccent,
-              child: Icon(Icons.person, color: Colors.white),
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/profile');   // <-- Navigate to Profile
+              },
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primaryAccent,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
             ),
           ),
         ],
+
       ),
 
       // SAFE AREA FIXES THE EXTRA TOP SPACE

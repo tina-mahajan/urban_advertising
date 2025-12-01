@@ -103,20 +103,28 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
   final int targetProjectsMonth = 25;
   final int newRequestsCount = 3;
 
-  final List<EmployeeBooking> todaySchedule = [
-    EmployeeBooking(
-      time: '10:00 AM',
-      clientName: 'Sangam Collection',
-      location: 'Bhosari, Pune',
-      projectType: 'Daily Photo Shoot',
-    ),
-    EmployeeBooking(
-      time: '04:00 PM',
-      clientName: 'Client Review Meeting',
-      location: 'Office Meeting Room',
-      projectType: 'Project Planning',
-    ),
-  ];
+  String getFormattedToday() {
+    final now = DateTime.now();
+
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    return "${now.day} ${months[now.month - 1]} ${now.year}";
+  }
+
+  Stream<QuerySnapshot> getTodaySchedule() {
+    // This format must match the format used when storing the 'date' field in Firestore
+    String today = getFormattedToday();
+
+    return FirebaseFirestore.instance
+        .collection("slot_request")
+        .where("date", isEqualTo: today)
+        .where("status", isEqualTo: "approved")   // show only approved slots
+        .snapshots();
+  }
+
 
   final List<CarouselItem> carouselItems = [
     CarouselItem(
@@ -263,7 +271,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
           final item = carouselItems[index];
           return Container(
             width: 250,
-            margin: EdgeInsets.only(right: 15),
+            margin: const EdgeInsets.only(right: 15),
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: AppColors.cardBackground,
@@ -358,9 +366,9 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         // 🔥 Futuristic Neon Gradient
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF6E40C2),        // Deep Purple
-            Color(0xFF8A63D2),        // Light Purple
-            Color(0xFF5CC8FF),        // Cyan Blue
+            Color(0xFF6E40C2),        // Deep Purple (AppColors.primaryAccent)
+            Color(0xFF8A63D2),        // Light Purple (AppColors.primaryAccentLight)
+            Color(0xFF5CC8FF),        // Cyan Blue (AppColors.secondaryAccent)
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -372,7 +380,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
             color: AppColors.primaryAccent.withOpacity(0.4),
             blurRadius: 20,
             spreadRadius: 2,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -457,7 +465,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
     final actions = [
       {'label': 'Upload Data', 'icon': Icons.cloud_upload, 'color': AppColors.primaryAccent},
       {'label': 'Project Queue', 'icon': Icons.assignment_turned_in, 'color': AppColors.secondaryAccent},
-      {'label': 'Report Prob', 'icon': Icons.bug_report, 'color': AppColors.error},
+      {'label': 'Report Prob', 'icon': Icons.bug_report, 'color': AppColors.errors}, // Using AppColors.errors for a bolder red
       {'label': 'Resources', 'icon': Icons.folder_open, 'color': Colors.amber},
       {'label': 'Help & FAQ', 'icon': Icons.help_outline, 'color': Colors.cyan},
       {'label': 'Team Chat', 'icon': Icons.chat_bubble_outline, 'color': Colors.pinkAccent},
@@ -499,103 +507,220 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
     );
   }
 
-  // ---------------- SCHEDULE LIST ----------------
+  // ---------------- SCHEDULE LIST (IMPROVED) ----------------
   Widget _buildScheduleList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: todaySchedule.length,
-      itemBuilder: (context, index) {
-        final booking = todaySchedule[index];
-        final isCompleted = booking.isCompleted;
+    return StreamBuilder<QuerySnapshot>(
+      stream: getTodaySchedule(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryAccent),
+          );
+        }
 
-        final borderColor = isCompleted ? AppColors.success : AppColors.secondaryAccent;
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Text(
+            "No schedule for today.",
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          );
+        }
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: isCompleted ? AppColors.success.withOpacity(0.07) : AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor.withOpacity(0.3)),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Time Marker
-              Column(
+        final docs = snapshot.data!.docs;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+
+            String time = data["time"] ?? "-";
+            String customer = data["customer_name"] ?? "Client";
+            String service = data["service"] ?? "-";
+            String location = data["location"] ?? "-";
+            String status = (data["status"] ?? "pending").toLowerCase();
+            String docId = docs[index].id;
+
+            // COLORS
+            Color badgeColor;
+            Color badgeText;
+
+            if (status == "approved") {
+              badgeColor = Colors.orange.withOpacity(0.2);
+              badgeText = Colors.orange;
+            } else if (status == "done") {
+              badgeColor = Colors.green.withOpacity(0.2);
+              badgeText = Colors.green;
+            } else {
+              badgeColor = Colors.red.withOpacity(0.2);
+              badgeText = Colors.red;
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 15),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.secondaryAccent.withOpacity(0.3)),
+              ),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(booking.time,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  Container(
-                    width: 3,
-                    height: 40,
-                    margin: const EdgeInsets.only(top: 5),
-                    color: borderColor,
+                  // ---------------- TOP ROW ----------------
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // TIME
+                      Text(
+                        time,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      Row(
+                        children: [
+                          // APPROVED / PENDING BADGE
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              status.toUpperCase(),
+                              style: TextStyle(
+                                color: badgeText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+
+                          // SMALL GAP
+                          if (status == "approved") const SizedBox(width: 10),
+
+                          // DONE BUTTON
+                          if (status == "approved")
+                            ElevatedButton(
+                              onPressed: () async {
+                                bool confirm = await showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      backgroundColor: AppColors.cardBackground,
+                                      title: const Text("Mark as Done?",
+                                          style: TextStyle(color: Colors.white)),
+                                      content: const Text(
+                                        "Are you sure you want to mark this slot as DONE?",
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text("Cancel",
+                                              style: TextStyle(color: Colors.redAccent)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: const Text("Yes",
+                                              style: TextStyle(color: Colors.greenAccent)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (confirm) {
+                                  await FirebaseFirestore.instance
+                                      .collection("slot_request")
+                                      .doc(docId)
+                                      .update({"status": "done"});
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.greenAccent.shade100,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                minimumSize: Size(50, 30),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text("Done",
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ---------------- CLIENT NAME ----------------
+                  Text(
+                    customer,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // ---------------- SERVICE ----------------
+                  Row(
+                    children: [
+                      const Icon(Icons.camera_alt_outlined,
+                          size: 16, color: Colors.purpleAccent),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          service,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  // ---------------- LOCATION ----------------
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 16, color: Colors.orangeAccent),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          location,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(width: 15),
-
-              // Main Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(booking.clientName,
-                        style: TextStyle(
-                          color: isCompleted ? AppColors.success : Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          decoration: isCompleted ? TextDecoration.lineThrough : null,
-                        )),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.work_outline, color: AppColors.primaryAccent, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            booking.projectType,
-                            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined, color: Colors.orangeAccent, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            booking.location,
-                            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Status
-              Chip(
-                backgroundColor: isCompleted ? AppColors.success.withOpacity(0.2) : AppColors.warning.withOpacity(0.2),
-                label: Text(
-                  isCompleted ? 'Done' : 'Pending',
-                  style: TextStyle(
-                      color: isCompleted ? AppColors.success : AppColors.errors,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
+
+
+
 
   // ---------------- DATE ----------------
   String _getTodayDate() {

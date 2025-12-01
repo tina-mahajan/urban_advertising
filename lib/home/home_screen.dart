@@ -156,15 +156,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "Urban Advertising",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                        Image.asset(
+                          "assets/white.png",
+                          height: 50,   // adjust size as needed
+                          fit: BoxFit.contain,
                         ),
+
                         IconButton(
                           icon: const Icon(Icons.person, color: Colors.white),
                           onPressed: () =>
