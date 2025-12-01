@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AppColors {
   static const Color darkBackground = Color(0xFF141414);
@@ -21,71 +19,34 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  List<dynamic> upcoming = [];
-  List<dynamic> pending = [];
-  List<dynamic> history = [];
-
-  bool isLoading = true;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    fetchBookings();
-  }
-
-  Future<void> fetchBookings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString("token");
-
-    final response = await http.get(
-      Uri.parse("http://10.0.2.2:4000/api/bookings/my-bookings"),
-      headers: {"Authorization": "Bearer $token"},
-    );
-
-    print("BOOKING HISTORY = ${response.body}");
-
-    if (response.statusCode == 200) {
-      List data = jsonDecode(response.body)["bookings"];
-
-      setState(() {
-        upcoming =
-            data.where((b) => b['status'] == "confirmed" || b['status'] == "assigned").toList();
-        pending = data.where((b) => b['status'] == "pending").toList();
-        history = data.where((b) => b['status'] == "completed" || b['status'] == "cancelled").toList();
-        isLoading = false;
-      });
-    } else {
-      setState(() => isLoading = false);
-    }
   }
 
   Color _statusColor(String status) {
-    switch (status) {
-      case "confirmed":
-      case "assigned":
-        return Colors.lightGreenAccent;
+    switch (status.toLowerCase()) {
+      case "approved":
+        return Colors.greenAccent;
       case "pending":
         return Colors.orangeAccent;
-      case "completed":
+      case "done":
         return AppColors.primaryAccent;
-      case "cancelled":
+      case "rejected":
         return Colors.redAccent;
       default:
         return Colors.white;
     }
   }
 
-  Color _getStatusBackground(Color color) => color.withAlpha(38);
+  Color _getStatusBackground(Color color) => color.withOpacity(0.15);
 
   Widget bookingCard({
-    required String date,
-    required String time,
-    required String name,
-    required String phone,
-    required String statusText,
-    required Color statusColor,
+    required Map<String, dynamic> data,
   }) {
+    String status = data["status"] ?? "pending";
+
     return Card(
       color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -96,30 +57,27 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Date: $date", style: const TextStyle(fontSize: 16, color: Colors.white)),
-            const SizedBox(height: 6),
-            Text("Time: $time", style: const TextStyle(fontSize: 16, color: Colors.white)),
-            const SizedBox(height: 6),
-            Text("Videographer: $name",
-                style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
-            const SizedBox(height: 6),
-            Text("Phone: $phone",
-                style: const TextStyle(fontSize: 16, color: AppColors.secondaryText)),
-            const SizedBox(height: 12),
+            Text("Date: ${data["date"]}", style: const TextStyle(color: Colors.white)),
+            const SizedBox(height: 5),
+            Text("Time: ${data["time"]}", style: const TextStyle(color: Colors.white)),
+            const SizedBox(height: 5),
+            Text("Service: ${data["service"]}",
+                style: const TextStyle(color: AppColors.secondaryText)),
+            const SizedBox(height: 8),
+
+            // STATUS BADGE
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: _getStatusBackground(statusColor),
+                color: _getStatusBackground(_statusColor(status)),
                 borderRadius: BorderRadius.circular(8),
               ),
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Center(
                 child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  status.toUpperCase(),
+                  style:
+                  TextStyle(color: _statusColor(status), fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -129,47 +87,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     );
   }
 
-  Widget historyCard({
-    required String date,
-    required String time,
-    required String statusText,
-    required Color statusColor,
-  }) {
-    return Card(
-      color: AppColors.cardBackground,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Date: $date", style: const TextStyle(fontSize: 16, color: Colors.white)),
-            const SizedBox(height: 6),
-            Text("Time: $time", style: const TextStyle(fontSize: 16, color: Colors.white)),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: _getStatusBackground(statusColor),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Center(
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  // STREAM FOR FIREBASE BOOKINGS
+  Stream<QuerySnapshot> getBookingsStream() {
+    return FirebaseFirestore.instance
+        .collection("slot_request")
+        .orderBy("created_at", descending: true)
+        .snapshots();
   }
 
   @override
@@ -194,52 +117,53 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
         ),
       ),
 
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : TabBarView(
-        controller: _tabController,
-        children: [
-          // UPCOMING
-          ListView(
-            children: upcoming.map((b) {
-              return bookingCard(
-                date: b["date"],
-                time: b["slot_time"],
-                name: b["assigned_employee"] ?? "Not Assigned",
-                phone: "N/A",
-                statusText: b["status"],
-                statusColor: _statusColor(b["status"]),
-              );
-            }).toList(),
-          ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: getBookingsStream(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          }
 
-          // PENDING
-          ListView(
-            children: pending.map((b) {
-              return bookingCard(
-                date: b["date"],
-                time: b["slot_time"],
-                name: "Waiting...",
-                phone: "N/A",
-                statusText: "Awaiting Confirmation",
-                statusColor: Colors.orangeAccent,
-              );
-            }).toList(),
-          ),
+          final docs = snapshot.data!.docs;
 
-          // HISTORY
-          ListView(
-            children: history.map((b) {
-              return historyCard(
-                date: b["date"],
-                time: b["slot_time"],
-                statusText: b["status"],
-                statusColor: _statusColor(b["status"]),
-              );
-            }).toList(),
-          ),
-        ],
+          final upcoming = docs.where((d) =>
+          d["status"] == "approved").toList();
+
+          final pending = docs.where((d) =>
+          d["status"] == "pending").toList();
+
+          final history = docs.where((d) =>
+          d["status"] == "done" || d["status"] == "rejected").toList();
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildList(upcoming),
+              _buildList(pending),
+              _buildList(history),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildList(List docs) {
+    if (docs.isEmpty) {
+      return const Center(
+        child: Text(
+          "No records found.",
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    return ListView(
+      children: docs.map((d) {
+        return bookingCard(data: d.data());
+      }).toList(),
     );
   }
 }

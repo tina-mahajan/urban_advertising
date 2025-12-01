@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      // 1️⃣ Login User
+      // 1️⃣ Login User using Firebase Auth
       UserCredential userCredential =
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -45,57 +45,83 @@ class _LoginScreenState extends State<LoginScreen> {
 
       String uid = userCredential.user!.uid;
 
-      // 2️⃣ Fetch User Details From Firestore
-      DocumentSnapshot userDoc;
+      // -------------------------------
+      // 2️⃣ CHECK USER ROLE IN FIRESTORE
+      // -------------------------------
 
-// First check Customer
+      DocumentSnapshot? userDoc;
+
+      // CHECK ADMIN
+      userDoc = await FirebaseFirestore.instance
+          .collection("admin")
+          .doc(uid)
+          .get();
+
+      if (userDoc.exists) {
+        // ADMIN FOUND
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+        // Save SharedPrefs
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("uid", uid);
+        await prefs.setString("email", email);
+        await prefs.setString("role", "admin");
+
+        // Redirect
+        Navigator.pushReplacementNamed(context, '/admin_dashboard');
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // CHECK CUSTOMER
       userDoc = await FirebaseFirestore.instance
           .collection("Customer")
           .doc(uid)
           .get();
 
-      if (!userDoc.exists) {
-        // If not found, check employee
-        userDoc = await FirebaseFirestore.instance
-            .collection("employee")
-            .doc(uid)
-            .get();
-      }
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
 
-      if (!userDoc.exists) {
-        setState(() => isLoading = false);
-        showMessage("User record not found!", Colors.red);
-        return;
-      }
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("uid", uid);
+        await prefs.setString("email", email);
+        await prefs.setString("role", "customer");
 
-
-      Map<String, dynamic> userData =
-      userDoc.data() as Map<String, dynamic>;
-
-      // 3️⃣ Save Data Locally (SharedPreferences)
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("uid", uid);
-      await prefs.setString("email", email);
-      await prefs.setString("userData", userDoc.data().toString());
-
-      // 4️⃣ Redirect Based on Role (default role = customer)
-      String role = userData["role"] ?? "customer";
-
-      if (role == "customer") {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
-      } else if (role == "employee") {
+
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // CHECK EMPLOYEE
+      userDoc = await FirebaseFirestore.instance
+          .collection("employee")
+          .doc(uid)
+          .get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString("uid", uid);
+        await prefs.setString("email", email);
+        await prefs.setString("role", "employee");
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const EmployeeHomeScreen()),
         );
-      } else if (role == "admin") {
-        Navigator.pushReplacementNamed(context, '/admin_dashboard');
+
+        setState(() => isLoading = false);
+        return;
       }
 
+      // If no record in Firestore
       setState(() => isLoading = false);
+      showMessage("User record not found in database!", Colors.red);
 
     } on FirebaseAuthException catch (e) {
       setState(() => isLoading = false);
@@ -104,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (e.code == "user-not-found") msg = "User not found";
       if (e.code == "wrong-password") msg = "Incorrect password";
-      if (e.code == "invalid-email") msg = "Invalid email format";
+      if (e.code == "invalid-email") msg = "Invalid email";
 
       showMessage(msg, Colors.red);
 
@@ -113,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showMessage("Error: $e", Colors.red);
     }
   }
+
 
   void showMessage(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(

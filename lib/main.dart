@@ -18,6 +18,7 @@ import 'package:urban_advertising/Employee/profile/emp_edit_profile.dart';
 import 'package:urban_advertising/Employee/screens/emp_slots.dart';
 import 'package:urban_advertising/Employee/screens/clients_screen.dart';
 import 'package:urban_advertising/Employee/screens/emp_client_profile.dart';
+import 'package:urban_advertising/Admin/admin_dashboard_screen.dart';
 
 
 
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
         '/emp_home': (context) => const EmployeeHomeScreen(),
         '/employee_profile': (context) => const EmployeeProfileScreen(),
         '/emp_settings': (context) => const EmployeeSettingsScreen(),
+        '/admin_dashboard': (context) => const AdminDashboardScreen(),
         '/employee_edit_profile': (context) => const EmployeeEditProfileScreen(
           name: "",
           email: "",
