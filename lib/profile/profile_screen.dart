@@ -198,26 +198,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: "Subscription Details",
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text("Premium Plan", style: TextStyle(color: Colors.white)),
-          Text("Valid Till: November 12, 2025",
+        children: [
+          const Text("Premium Plan", style: TextStyle(color: Colors.white)),
+          const Text("Valid Till: November 12, 2025",
               style: TextStyle(color: Colors.white70)),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Upcoming Bookings: 08",
+              const Text("Upcoming Bookings: 08",
                   style: TextStyle(color: Colors.white70)),
+
+              // ⬇️ Updated Button with Navigation
               ElevatedButton(
-                onPressed: null,
-                style: ButtonStyle(
-                  backgroundColor:
-                  MaterialStatePropertyAll<Color>(Colors.white),
-                  foregroundColor:
-                  MaterialStatePropertyAll<Color>(Colors.black),
+                style: const ButtonStyle(
+                  backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
+                  foregroundColor: MaterialStatePropertyAll<Color>(Colors.black),
                 ),
-                child: Text("Renew Plan"),
-              )
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SubscriptionScreen(),
+                    ),
+                  );
+                },
+                child: const Text("Renew Plan"),
+              ),
             ],
           )
         ],

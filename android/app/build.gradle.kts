@@ -24,6 +24,7 @@ android {
     }
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -60,5 +61,7 @@ dependencies {
     // Optional Firebase services:
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-messaging")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
 }
 apply(plugin = "com.google.gms.google-services")

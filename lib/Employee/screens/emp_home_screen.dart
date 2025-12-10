@@ -4,7 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urban_advertising/Employee/widgets/bottom_navbar.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:urban_advertising/Employee/screens/upload_data_screen.dart';
-
+import 'package:urban_advertising/services/reminder_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:urban_advertising/services/reminder_service.dart';
+import 'package:urban_advertising/services/attendance_service.dart';
 
 import 'dart:math' as math;
 
@@ -82,11 +85,48 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
+  Future<void> saveEmployeeFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString("uid");
+
+    if (uid == null) return;
+
+    String? token = await FirebaseMessaging.instance.getToken();
+
+    if (token != null) {
+      await FirebaseFirestore.instance
+          .collection("employee")
+          .doc(uid)
+          .update({"fcmToken": token});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchEmployeeData();
     fetchAllSlotDates();
+    ReminderService.sendEmployeeTomorrowReminder();
+    saveEmployeeFcmToken();
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final notification = message.notification;
+      if (notification == null) return;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(notification.title ?? "Notification"),
+          content: Text(notification.body ?? ""),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            )
+          ],
+        ),
+      );
+    });
+
   }
 
   Future<void> fetchEmployeeData() async {
@@ -275,6 +315,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
             fontWeight: FontWeight.w800,
           ),
         ),
+        //Notification button
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded,
@@ -297,7 +338,15 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
       ),
 
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          AttendanceService.markAttendance(
+            context: context,
+            name: employeeName,
+            email: employeeEmail,
+            role: "employee",
+          );
+        },
+
         label: const Text('Mark Attendance',
             style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.fingerprint_rounded),
@@ -758,4 +807,4 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
       ),
     );
   }
-}
+}//Original COde

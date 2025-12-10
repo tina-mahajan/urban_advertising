@@ -43,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       String uid = userCredential.user!.uid;
 
-      // Store customer data in Firestore
+      // Store customer data in Firestore (🔥 added fcmToken field)
       await FirebaseFirestore.instance.collection("Customer").doc(uid).set({
         "Customer_Id": uid,
         "Customer_Name": name,
@@ -51,6 +51,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "Customer_Mobile_Number": phone,
         "Customer_Isactive": true,
         "Created_At": DateTime.now(),
+
+        // ⭐ NEW FIELD ADDED (Prevents error)
+        "fcmToken": "",
       });
 
       setState(() => isLoading = false);

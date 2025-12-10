@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urban_advertising/screens/auth/register_screen.dart';
 import 'package:urban_advertising/home/home_screen.dart';
 import 'package:urban_advertising/Employee/screens/emp_home_screen.dart';
+import 'package:urban_advertising/services/push_notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,47 +46,52 @@ class _LoginScreenState extends State<LoginScreen> {
 
       String uid = userCredential.user!.uid;
 
-      // -------------------------------
-      // 2️⃣ CHECK USER ROLE IN FIRESTORE
-      // -------------------------------
-
       DocumentSnapshot? userDoc;
 
-      // CHECK ADMIN
+      // -------------------------------
+      // 🔹 CHECK ADMIN COLLECTION
+      // -------------------------------
       userDoc = await FirebaseFirestore.instance
           .collection("admin")
           .doc(uid)
           .get();
 
       if (userDoc.exists) {
-        // ADMIN FOUND
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
-        // Save SharedPrefs
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("uid", uid);
         await prefs.setString("email", email);
         await prefs.setString("role", "admin");
 
-        // Redirect
+        // 🔥 SAVE TOKEN FOR ADMIN
+        await PushNotificationService.initAndSaveToken(
+          uid: uid,
+          role: "admin",
+        );
+
         Navigator.pushReplacementNamed(context, '/admin_dashboard');
         setState(() => isLoading = false);
         return;
       }
 
-      // CHECK CUSTOMER
+      // -------------------------------
+      // 🔹 CHECK CUSTOMER COLLECTION
+      // -------------------------------
       userDoc = await FirebaseFirestore.instance
           .collection("Customer")
           .doc(uid)
           .get();
 
       if (userDoc.exists) {
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("uid", uid);
         await prefs.setString("email", email);
-        await prefs.setString("role", "customer");
+        await prefs.setString("role", "Customer");
+
+        // 🔥 SAVE TOKEN FOR CUSTOMER (FIXED)
+        await PushNotificationService.initAndSaveToken(
+          uid: uid,
+          role: "Customer",   // ✅ FIXED (Capital C)
+        );
 
         Navigator.pushReplacement(
           context,
@@ -96,19 +102,25 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // CHECK EMPLOYEE
+      // -------------------------------
+      // 🔹 CHECK EMPLOYEE COLLECTION
+      // -------------------------------
       userDoc = await FirebaseFirestore.instance
           .collection("employee")
           .doc(uid)
           .get();
 
       if (userDoc.exists) {
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("uid", uid);
         await prefs.setString("email", email);
         await prefs.setString("role", "employee");
+
+        // 🔥 SAVE TOKEN FOR EMPLOYEE
+        await PushNotificationService.initAndSaveToken(
+          uid: uid,
+          role: "employee",
+        );
 
         Navigator.pushReplacement(
           context,
@@ -119,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // If no record in Firestore
+      // If user not found in any collection
       setState(() => isLoading = false);
       showMessage("User record not found in database!", Colors.red);
 
@@ -127,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => isLoading = false);
 
       String msg = "Login failed";
-
       if (e.code == "user-not-found") msg = "User not found";
       if (e.code == "wrong-password") msg = "Incorrect password";
       if (e.code == "invalid-email") msg = "Invalid email";
@@ -139,7 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
       showMessage("Error: $e", Colors.red);
     }
   }
-
 
   void showMessage(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
