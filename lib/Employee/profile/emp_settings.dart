@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_navbar.dart';
 import '../../core/theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EmployeeSettingsScreen extends StatefulWidget {
   const EmployeeSettingsScreen({super.key});
@@ -104,8 +106,10 @@ class _EmployeeSettingsScreenState extends State<EmployeeSettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors1.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Logout",
-            style: TextStyle(color: AppColors.textLight)),
+        title: const Text(
+          "Logout",
+          style: TextStyle(color: AppColors.textLight),
+        ),
         content: const Text(
           "Are you sure you want to logout?",
           style: TextStyle(color: Colors.white70),
@@ -113,16 +117,34 @@ class _EmployeeSettingsScreenState extends State<EmployeeSettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.white70)),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.white70),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            onPressed: () {
+            onPressed: () async {
+              // ✅ 1. Firebase sign out
+              await FirebaseAuth.instance.signOut();
+
+              // ✅ 2. Clear saved session
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+
+              if (!mounted) return;
+
+              // ✅ 3. Go to login & clear stack
               Navigator.pushNamedAndRemoveUntil(
-                  context, "/login", (route) => false);
+                context,
+                "/login",
+                    (route) => false,
+              );
             },
             child: const Text("Logout"),
           ),
@@ -130,6 +152,7 @@ class _EmployeeSettingsScreenState extends State<EmployeeSettingsScreen> {
       ),
     );
   }
+
 
   // ---- MAIN BUILD ----
   @override

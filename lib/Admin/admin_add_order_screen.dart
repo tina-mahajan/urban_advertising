@@ -13,6 +13,7 @@ class AdminAddOrderScreen extends StatefulWidget {
 class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final TextEditingController _advanceAmountController = TextEditingController();
   final TextEditingController _customerNameController = TextEditingController();
   final TextEditingController _customerPhoneController =
   TextEditingController();
@@ -32,6 +33,7 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
     _serviceController.dispose();
     _placeController.dispose();
     _messageController.dispose();
+    _advanceAmountController.dispose();
     super.dispose();
   }
 
@@ -318,6 +320,9 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
         "service": _serviceController.text.trim(),
         "location": _placeController.text.trim(),
         "message": _messageController.text.trim(),
+        "advance_amount": _advanceAmountController.text.trim().isEmpty
+            ? 0
+            : double.parse(_advanceAmountController.text.trim()),
         "date": _formatDate(_selectedDate!),
         "time": _formatTime(_selectedTime!),
         "status": "pending",
@@ -405,6 +410,21 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
 
                 const SizedBox(height: 12),
                 _buildField(_serviceController, "Service"),
+
+                const SizedBox(height: 12),
+                _buildField(
+                  _advanceAmountController,
+                  "Advance Payment (₹)",
+                  keyboard: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null; // optional
+                    if (double.tryParse(v) == null) {
+                      return "Enter valid amount";
+                    }
+                    return null;
+                  },
+                ),
+
 
                 const SizedBox(height: 12),
                 _buildField(_placeController, "Place / Location"),

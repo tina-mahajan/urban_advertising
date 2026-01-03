@@ -4,6 +4,7 @@ import 'package:urban_advertising/core/theme.dart';
 // AUTH
 import 'package:urban_advertising/screens/auth/login_screen.dart';
 import 'package:urban_advertising/screens/auth/register_screen.dart';
+import 'package:urban_advertising/screens/auth/auth_check_screen.dart';
 
 // CUSTOMER
 import 'package:urban_advertising/home/home_screen.dart';
@@ -38,18 +39,20 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:urban_advertising/services/notification_service.dart';
 
+// 🔥 ADDED (REQUIRED FOR TOKEN REFRESH)
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 /// 🔑 Global navigator key for popup notifications
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-
-/// Background notification handler
+/// 🔔 Background notification handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   print("🔥 Background message: ${message.notification?.title}");
 }
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,11 +61,39 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // 🔄 FCM TOKEN REFRESH HANDLER (CRITICAL FOR AUTO LOGIN)
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString("uid");
+    final role = prefs.getString("role");
+
+    if (uid == null || role == null) return;
+
+    final collection = role == "admin"
+        ? "admin"
+        : role == "employee"
+        ? "employee"
+        : "Customer";
+
+    await FirebaseFirestore.instance
+        .collection(collection)
+        .doc(uid)
+        .update({"fcmToken": newToken});
+
+    print("🔄 FCM Token refreshed & saved");
+  });
+
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
+  );
 
   // Request permission (Android 13+)
   final messaging = FirebaseMessaging.instance;
-  await messaging.requestPermission(alert: true, badge: true, sound: true);
+  await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   // Foreground notification listener
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -81,25 +112,26 @@ void main() async {
   runApp(const MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey, // <--- required for notifications
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Urban Advertising',
       theme: appTheme,
-      initialRoute: '/login',
+
+      // ✅ AUTO LOGIN HANDLER
+      home: const AuthCheckScreen(),
 
       routes: {
         // AUTH
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
 
-        // CUSTOMER HOME + PROFILE
+        // CUSTOMER
         '/home': (context) => const HomeScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
         '/profile': (context) => const ProfileScreen(),
@@ -113,7 +145,7 @@ class MyApp extends StatelessWidget {
           bookedDate: DateTime.now(),
         ),
 
-        // PAYMENT FLOW
+        // PAYMENT
         '/payment_screen': (context) =>
         const PaymentScreen(planName: '', planPrice: ''),
         '/success': (context) {
@@ -134,8 +166,8 @@ class MyApp extends StatelessWidget {
         '/clients': (context) => const ClientsScreen(),
         '/employee_profile': (context) => const EmployeeProfileScreen(),
         '/emp_settings': (context) => const EmployeeSettingsScreen(),
-
-        '/employee_edit_profile': (context) => const EmployeeEditProfileScreen(
+        '/employee_edit_profile': (context) =>
+        const EmployeeEditProfileScreen(
           name: "",
           email: "",
           phone: "",
@@ -143,8 +175,8 @@ class MyApp extends StatelessWidget {
         ),
 
         '/emp_client_profile': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-          as Map<String, dynamic>;
+          final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
           return EmpClientProfileScreen(
             clientId: args["clientId"],
@@ -156,7 +188,8 @@ class MyApp extends StatelessWidget {
         },
 
         // ADMIN
-        '/admin_dashboard': (context) => const AdminDashboardScreen(),
+        '/admin_dashboard': (context) =>
+        const AdminDashboardScreen(),
       },
     );
   }
