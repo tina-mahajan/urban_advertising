@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_navbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class AppColors {
   static const Color darkBackground = Color(0xFF0A0A0A); // Same as profile background
@@ -278,22 +281,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textMuted)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            onPressed: () {
-              Navigator.pop(ctx);
+            onPressed: () async {
+              // ✅ 1. Firebase logout
+              await FirebaseAuth.instance.signOut();
+
+              // ✅ 2. Clear local session
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+
+              if (!mounted) return;
+
+              // ✅ 3. Navigate to login & clear stack
               Navigator.pushNamedAndRemoveUntil(
-                  context, '/login', (route) => false);
+                context,
+                '/login',
+                    (route) => false,
+              );
             },
-            child: const Text('Logout',
-                style: TextStyle(color: Colors.white, fontFamily: 'Poppins')),
+            child: const Text(
+              'Logout',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'Poppins',
+              ),
+            ),
           ),
         ],
       ),
