@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/Admin/admin_profile_screen.dart';
+import 'package:urban_advertising/Admin/change_password_screen.dart';
+import 'package:urban_advertising/Admin/terms_and_conditions_screen.dart';
+import 'package:urban_advertising/Admin/help_and_support_screen.dart';
+import 'package:urban_advertising/Admin/system_updates_screen.dart';
+import 'package:urban_advertising/Admin/security_settings_screen.dart';
+import 'package:urban_advertising/Admin/report_problem_screen.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -156,14 +163,30 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               _buildSettingItem(
                 icon: Icons.admin_panel_settings,
                 title: 'Admin Profile',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AdminProfileScreen(),
+                    ),
+                  );
+                },
               ),
+
               Divider(color: Colors.white10),
               _buildSettingItem(
                 icon: Icons.lock_outline,
                 title: 'Change Password',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
+                  );
+                },
               ),
+
               Divider(color: Colors.white10),
               _buildSettingItem(
                 icon: Icons.notifications_none,
@@ -184,13 +207,20 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               _buildSettingItem(
                 icon: Icons.system_update_alt,
                 title: 'System Updates',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SystemUpdatesScreen()));
+                },
               ),
               Divider(color: Colors.white10),
               _buildSettingItem(
                 icon: Icons.security,
                 title: 'Security Settings',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()));
+
+                },
               ),
             ],
           ),
@@ -201,13 +231,29 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               _buildSettingItem(
                 icon: Icons.description_outlined,
                 title: 'Terms & Conditions',
-                onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TermsAndConditionsScreen(),
+                      ),
+                    );
+                  }
+
               ),
               Divider(color: Colors.white10),
               _buildSettingItem(
                 icon: Icons.support_agent,
                 title: 'Help & Support',
-                onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HelpAndSupportScreen(),
+                      ),
+                    );
+                  }
+
               ),
             ],
           ),
@@ -218,7 +264,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               _buildSettingItem(
                 icon: Icons.bug_report_outlined,
                 title: 'Report a Problem',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const ReportProblemScreen()));
+                },
               ),
               Divider(color: Colors.white10),
               _buildSettingItem(
