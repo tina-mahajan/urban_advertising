@@ -84,13 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (userDoc.exists) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("uid", uid);
+        await prefs.setString("customer_uid", uid); // ✅ ADD THIS LINE
         await prefs.setString("email", email);
         await prefs.setString("role", "Customer");
 
-        // 🔥 SAVE TOKEN FOR CUSTOMER (FIXED)
         await PushNotificationService.initAndSaveToken(
           uid: uid,
-          role: "Customer",   // ✅ FIXED (Capital C)
+          role: "Customer",
         );
 
         Navigator.pushReplacement(
@@ -101,6 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => isLoading = false);
         return;
       }
+
 
       // -------------------------------
       // 🔹 CHECK EMPLOYEE COLLECTION

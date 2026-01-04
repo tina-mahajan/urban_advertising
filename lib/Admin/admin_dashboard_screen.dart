@@ -21,6 +21,9 @@ import 'package:urban_advertising/Admin/admin_revenue_screen.dart';
 import 'package:urban_advertising/Admin/admin_attendance_screen.dart';
 import 'package:urban_advertising/Admin/admin_services_screen.dart';
 import 'package:urban_advertising/services/attendance_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:urban_advertising/screens/auth/login_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -579,7 +582,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         MaterialPageRoute(builder: (_) => const AdminAddOrderScreen()),
       );
     } else if (index == 2) {
-      // 🔥 SHOW LOGOUT CONFIRMATION DIALOG
+      // 🔥 LOGOUT CONFIRMATION
       bool? confirmLogout = await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -598,11 +601,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       );
 
-      // If user pressed "Logout"
       if (confirmLogout == true) {
+        // ✅ 1. Firebase Sign Out
         await FirebaseAuth.instance.signOut();
+
+        // ✅ 2. Clear SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+
         if (!mounted) return;
 
+        // ✅ 3. Navigate to Login & clear stack
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -611,7 +620,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
     }
   }
-
   // =========================== CALENDAR ===========================
 
   Widget _buildCalendar() {

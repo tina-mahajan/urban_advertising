@@ -22,6 +22,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String email = "";
   String phone = "";
 
+  int totalBookings = 0;
+  int upcomingBookings = 0;
+
   bool isLoading = true;
 
   @override
@@ -31,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // -------------------------------------------------
-  // 🔥 LOAD PROFILE INFO FROM FIRESTORE
+  // 🔥 LOAD PROFILE + ACTIVITY (NO NEW COLLECTIONS)
   // -------------------------------------------------
   Future<void> loadProfile() async {
     try {
@@ -44,31 +47,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       String uid = user.uid;
 
-      DocumentSnapshot doc = await FirebaseFirestore.instance
+      // CUSTOMER INFO
+      final customerDoc = await FirebaseFirestore.instance
           .collection("Customer")
           .doc(uid)
           .get();
 
-      if (doc.exists) {
-        setState(() {
-          name = doc["Customer_Name"] ?? "";
-          email = doc["Customer_Email"] ?? "";
-          phone = doc["Customer_Mobile_Number"] ?? "";
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
-      }
+      // BOOKINGS (USED FOR ACTIVITY)
+      final bookingSnap = await FirebaseFirestore.instance
+          .collection("slot_request")
+          .where("customerId", isEqualTo: uid)
+          .get();
+
+      setState(() {
+        if (customerDoc.exists) {
+          name = customerDoc["Customer_Name"] ?? "";
+          email = customerDoc["Customer_Email"] ?? "";
+          phone = customerDoc["Customer_Mobile_Number"] ?? "";
+        }
+
+        totalBookings = bookingSnap.docs.length;
+        upcomingBookings = bookingSnap.docs
+            .where((doc) => doc["status"] == "upcoming")
+            .length;
+
+        isLoading = false;
+      });
     } catch (e) {
-      print("PROFILE ERROR: $e");
+      debugPrint("PROFILE ERROR: $e");
       setState(() => isLoading = false);
     }
   }
 
   void onTap(int index) {
-    setState(() {
-      currentIndex = index;
-    });
+    setState(() => currentIndex = index);
 
     switch (index) {
       case 0:
@@ -116,7 +128,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : SingleChildScrollView(
@@ -135,7 +146,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar:
       CustomBottomNavBar(currentIndex: currentIndex, onTap: onTap),
     );
@@ -179,10 +189,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) =>
-                        EditProfileScreen(name: name, email: email, phone: phone)),
+                  builder: (_) =>
+                      EditProfileScreen(name: name, email: email, phone: phone),
+                ),
               );
-              loadProfile(); // refresh after editing
+              loadProfile();
             },
           )
         ],
@@ -191,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // -------------------------------------------------
-  // SUBSCRIPTION CARD
+  // SUBSCRIPTION CARD (SAFE FALLBACK)
   // -------------------------------------------------
   Widget _subscriptionCard(BuildContext context) {
     return _buildCard(
@@ -199,28 +210,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Premium Plan", style: TextStyle(color: Colors.white)),
-          const Text("Valid Till: November 12, 2025",
+          const Text("No Active Plan",
+              style: TextStyle(color: Colors.white)),
+          const Text("Valid Till: -",
               style: TextStyle(color: Colors.white70)),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Upcoming Bookings: 08",
-                  style: TextStyle(color: Colors.white70)),
-
-              // ⬇️ Updated Button with Navigation
+              Text("Upcoming Bookings: $upcomingBookings",
+                  style: const TextStyle(color: Colors.white70)),
               ElevatedButton(
                 style: const ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll<Color>(Colors.white),
-                  foregroundColor: MaterialStatePropertyAll<Color>(Colors.black),
+                  backgroundColor:
+                  MaterialStatePropertyAll<Color>(Colors.white),
+                  foregroundColor:
+                  MaterialStatePropertyAll<Color>(Colors.black),
                 ),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SubscriptionScreen(),
-                    ),
+                        builder: (context) => const SubscriptionScreen()),
                   );
                 },
                 child: const Text("Renew Plan"),
@@ -233,35 +244,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // -------------------------------------------------
-  // ⭐ ACTIVITY CARD (FULL WIDTH — SAME STYLE AS OTHERS)
+  // ACTIVITY CARD (REAL DATA)
   // -------------------------------------------------
   Widget _activityCard() {
-    return SizedBox(
-      width: double.infinity, // FORCE FULL WIDTH
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: _boxStyle(),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Activity',
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _boxStyle(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Activity',
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Total Videos Posted: 12',
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Upcoming Bookings: 3',
-              style: TextStyle(color: Colors.white70),
-            ),
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text('Total Bookings: $totalBookings',
+              style: const TextStyle(color: Colors.white)),
+          const SizedBox(height: 4),
+          Text('Upcoming Bookings: $upcomingBookings',
+              style: const TextStyle(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------
+  // DOWNLOAD REPORT (PLACEHOLDER – SAFE)
+  // -------------------------------------------------
+  Widget _downloadReport() {
+    return InkWell(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Monthly report will be available soon"),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: _boxStyle(),
+        child: const Row(
+          children: [
+            Icon(Icons.download_rounded, color: Colors.white70),
+            SizedBox(width: 8),
+            Text("Download your Instagram Monthly Report",
+                style: TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -269,25 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // -------------------------------------------------
-  // DOWNLOAD REPORT CARD
-  // -------------------------------------------------
-  Widget _downloadReport() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _boxStyle(),
-      child: const Row(
-        children: [
-          Icon(Icons.download_rounded, color: Colors.white70),
-          SizedBox(width: 8),
-          Text("Download your Instagram Monthly Report",
-              style: TextStyle(color: Colors.white)),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------
-  // MY CONTENT CARD
+  // MY CONTENT
   // -------------------------------------------------
   Widget _contentSection(BuildContext context) {
     return _buildCard(
@@ -304,7 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // -------------------------------------------------
-  // Helper Widgets
+  // HELPERS
   // -------------------------------------------------
   Widget _buildCard({required String title, required Widget child}) {
     return Container(
@@ -315,7 +326,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Text(title,
               style: const TextStyle(
-                  fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           child,
         ],
@@ -327,7 +340,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return InkWell(
       onTap: () {
         if (screen != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => screen));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("$text feature coming soon")),
+          );
         }
       },
       child: Padding(
