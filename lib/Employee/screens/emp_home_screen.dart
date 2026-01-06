@@ -8,6 +8,10 @@ import 'package:urban_advertising/services/reminder_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:urban_advertising/services/reminder_service.dart';
 import 'package:urban_advertising/services/attendance_service.dart';
+import 'package:urban_advertising/Employee/screens/employee_video_tasks_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+
 
 import 'dart:math' as math;
 
@@ -724,10 +728,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         'color': AppColors.primaryAccent
       },
       {
-        'label': 'Project Queue',
-        'icon': Icons.assignment_turned_in,
-        'color': AppColors.secondaryAccent
+        'label': 'Video Tasks',
+        'icon': Icons.video_camera_back,
+        'color': Colors.purpleAccent
       },
+
       {
         'label': 'Report Prob',
         'icon': Icons.bug_report,
@@ -772,10 +777,19 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
                 ),
               );
             }
+            else if (a['label'] == 'Video Tasks') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EmployeeVideoTasksScreen(
+                    myUid: FirebaseAuth.instance.currentUser!.uid,
+                  ),
+                ),
+              );
 
-            // Add more navigation below if needed
-            // else if (a['label'] == 'Project Queue') {}
+            }
           },
+
           child: _buildActionButton(
             a['icon'] as IconData,
             a['label'] as String,
