@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:urban_advertising/core/theme.dart';
+import 'package:urban_advertising/services/push_notification_service.dart';
 
 class AdminAddVideoTaskScreen extends StatefulWidget {
   const AdminAddVideoTaskScreen({super.key});
@@ -13,8 +14,8 @@ class AdminAddVideoTaskScreen extends StatefulWidget {
 class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _clientController = TextEditingController();
-  final _titleController = TextEditingController();
+  final TextEditingController _clientController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
 
   String _videoType = "Reel";
   String _priority = "Normal";
@@ -41,15 +42,13 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
     }
   }
 
-  // ------------------ SAVE TASK ------------------
+  // ------------------ SAVE TASK (FINAL) ------------------
   Future<void> _saveTask() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_employeeId == null || _deliveryDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please assign employee & select delivery date"),
-        ),
+        const SnackBar(content: Text("Assign employee & select date")),
       );
       return;
     }
@@ -58,23 +57,20 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
 
     try {
       await FirebaseFirestore.instance.collection("video_tasks").add({
-        "client_name": _clientController.text.trim(),
         "video_title": _titleController.text.trim(),
-        "video_type": _videoType,
-        "priority": _priority,
+        "client_name": _clientController.text.trim(),
+
         "assigned_employee_id": _employeeId,
         "assigned_employee_name": _employeeName,
+
         "status": "pending",
-        "progress": 0,
-        "expected_delivery": _deliveryDate,
+        "expected_delivery": Timestamp.fromDate(_deliveryDate!),
         "created_at": FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Video task added successfully"),
-          backgroundColor: Colors.green,
-        ),
+      await PushNotificationService.sendNotificationToAllEmployees(
+        title: "🎬 New Video Task",
+        body: _titleController.text.trim(),
       );
 
       Navigator.pop(context);
@@ -82,6 +78,7 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
       setState(() => _saving = false);
     }
   }
+
 
   // ------------------ UI ------------------
   @override
@@ -98,12 +95,11 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
           key: _formKey,
           child: Column(
             children: [
-              _field(_clientController, "Client Name"),
+              _textField(_clientController, "Client Name"),
               const SizedBox(height: 12),
-              _field(_titleController, "Video Title"),
+              _textField(_titleController, "Video Title"),
               const SizedBox(height: 12),
 
-              // Video Type
               _dropdown(
                 label: "Video Type",
                 value: _videoType,
@@ -113,7 +109,6 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
 
               const SizedBox(height: 12),
 
-              // Priority
               _dropdown(
                 label: "Priority",
                 value: _priority,
@@ -123,7 +118,7 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
 
               const SizedBox(height: 12),
 
-              // Assign Employee
+              // ---------------- ASSIGN EMPLOYEE ----------------
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection("employee")
@@ -136,8 +131,8 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
 
                   return DropdownButtonFormField<String>(
                     dropdownColor: AppColors1.cardBackground,
-                    value: _employeeId,
                     decoration: _decoration("Assign Editor"),
+                    value: _employeeId,
                     items: snapshot.data!.docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       return DropdownMenuItem(
@@ -151,9 +146,11 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
                     onChanged: (value) {
                       final doc = snapshot.data!.docs
                           .firstWhere((e) => e.id == value);
-                      _employeeId = value;
-                      _employeeName =
-                      (doc.data() as Map<String, dynamic>)["name"];
+                      setState(() {
+                        _employeeId = value;
+                        _employeeName =
+                        (doc.data() as Map<String, dynamic>)["name"];
+                      });
                     },
                   );
                 },
@@ -161,10 +158,11 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
 
               const SizedBox(height: 16),
 
-              // Date
+              // ---------------- DELIVERY DATE ----------------
               OutlinedButton.icon(
                 onPressed: _pickDate,
-                icon: const Icon(Icons.calendar_today, color: Colors.white70),
+                icon:
+                const Icon(Icons.calendar_today, color: Colors.white70),
                 label: Text(
                   _deliveryDate == null
                       ? "Select Delivery Date"
@@ -197,7 +195,7 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
   }
 
   // ------------------ HELPERS ------------------
-  Widget _field(TextEditingController c, String label) {
+  Widget _textField(TextEditingController c, String label) {
     return TextFormField(
       controller: c,
       validator: (v) => v!.trim().isEmpty ? "Required" : null,
@@ -238,6 +236,15 @@ class _AdminAddVideoTaskScreenState extends State<AdminAddVideoTaskScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Colors.white24),
+      ),
+    );
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red,
       ),
     );
   }
