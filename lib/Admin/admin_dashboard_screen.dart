@@ -351,34 +351,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             const SizedBox(height: 24),
 
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AdminAddVideoTaskScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors1.cardBackground,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.video_call, color: Colors.purpleAccent, size: 28),
-                    SizedBox(height: 8),
-                    Text(
-                      "Add Video Task",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => const AdminAddVideoTaskScreen(),
+            //       ),
+            //     );
+            //   },
+            //   child: Container(
+            //     decoration: BoxDecoration(
+            //       color: AppColors1.cardBackground,
+            //       borderRadius: BorderRadius.circular(14),
+            //     ),
+            //     padding: const EdgeInsets.all(16),
+            //     child: Column(
+            //       mainAxisAlignment: MainAxisAlignment.center,
+            //       children: const [
+            //         Icon(Icons.video_call, color: Colors.purpleAccent, size: 28),
+            //         SizedBox(height: 8),
+            //         Text(
+            //           "Add Video Task",
+            //           style: TextStyle(color: Colors.white),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
 
             // ================== CALENDAR ==================
             _buildSectionHeader("Booking Calendar"),
