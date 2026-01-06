@@ -15,7 +15,9 @@ class _AdminRevenueScreenState extends State<AdminRevenueScreen> {
   int completedBookings = 0;
   int pendingBookings = 0;
 
-  double estimatedRevenue = 0;
+  double totalRevenue = 0;
+  double monthlyRevenue = 0;
+  double yearlyRevenue = 0;
 
   @override
   void initState() {
@@ -24,7 +26,7 @@ class _AdminRevenueScreenState extends State<AdminRevenueScreen> {
   }
 
   // --------------------------------------------------
-  // 🔥 LOAD REVENUE BASED ON SLOT_REQUEST + SERVICES
+  // 🔥 LOAD REVENUE (TOTAL + MONTHLY + YEARLY)
   // --------------------------------------------------
   Future<void> loadRevenue() async {
     try {
@@ -44,29 +46,57 @@ class _AdminRevenueScreenState extends State<AdminRevenueScreen> {
       final bookingSnapshot =
       await FirebaseFirestore.instance.collection("slot_request").get();
 
-      double revenue = 0;
+      final now = DateTime.now();
+
+      double total = 0;
+      double monthly = 0;
+      double yearly = 0;
+
       int completed = 0;
       int pending = 0;
+      int totalCount = 0;
 
       for (var doc in bookingSnapshot.docs) {
-        totalBookings++;
+        totalCount++;
 
         final data = doc.data();
         final String status = data["status"] ?? "";
         final String serviceName = data["service"] ?? "";
 
-        if (status == "done") {
-          completed++;
-          revenue += servicePriceMap[serviceName] ?? 0;
-        } else {
+        if (status != "done") {
           pending++;
+          continue;
+        }
+
+        completed++;
+
+        final price = servicePriceMap[serviceName] ?? 0;
+        total += price;
+
+        // 📅 DATE CHECK
+        final Timestamp? ts = data["created_at"];
+        if (ts != null) {
+          final date = ts.toDate();
+
+          // Monthly
+          if (date.month == now.month && date.year == now.year) {
+            monthly += price;
+          }
+
+          // Yearly
+          if (date.year == now.year) {
+            yearly += price;
+          }
         }
       }
 
       setState(() {
+        totalBookings = totalCount;
         completedBookings = completed;
         pendingBookings = pending;
-        estimatedRevenue = revenue;
+        totalRevenue = total;
+        monthlyRevenue = monthly;
+        yearlyRevenue = yearly;
         isLoading = false;
       });
     } catch (e) {
@@ -97,14 +127,27 @@ class _AdminRevenueScreenState extends State<AdminRevenueScreen> {
             _card("Total Bookings", totalBookings),
             _card("Completed Bookings", completedBookings),
             _card("Pending Bookings", pendingBookings),
+
+            const SizedBox(height: 12),
+
             _card(
-              "Estimated Revenue",
-              "₹ ${estimatedRevenue.toStringAsFixed(0)}",
+              "Total Revenue",
+              "₹ ${totalRevenue.toStringAsFixed(0)}",
             ),
+            _card(
+              "This Month Revenue",
+              "₹ ${monthlyRevenue.toStringAsFixed(0)}",
+            ),
+            _card(
+              "This Year Revenue",
+              "₹ ${yearlyRevenue.toStringAsFixed(0)}",
+            ),
+
             const SizedBox(height: 12),
             const Text(
               "* Revenue is calculated from completed bookings using service prices.",
               style: TextStyle(color: Colors.white70, fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

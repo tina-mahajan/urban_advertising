@@ -92,44 +92,20 @@ exports.onBookingStatusChange = functions.firestore
 
     // a) STATUS CHANGED
     if (before.status !== after.status) {
-      console.log(
-        `Status changed for booking ${bookingId}: ${before.status} -> ${after.status}`
-      );
-
-      // If approved -> notify customer
       if (after.status === "approved") {
-        const customerId = after.customer_id; // 👈 make sure you save this field when creating booking
-        if (!customerId) {
-          console.log("No customer_id on booking, skipping customer notify");
-        } else {
-          const customerDoc = await db
-            .collection("Customer")
-            .doc(customerId)
-            .get();
-
-          if (customerDoc.exists) {
-            const token = customerDoc.data().fcmToken;
-            if (token) {
-              const message = {
+        const customerId = after.customer_id;
+        if (customerId) {
+          const customerDoc = await db.collection("Customer").doc(customerId).get();
+          if (customerDoc.exists && customerDoc.data().fcmToken) {
+            await admin.messaging().sendToDevice(
+              customerDoc.data().fcmToken,
+              {
                 notification: {
                   title: "✅ Slot Confirmed",
-                  body: `Your booking for ${after.service || ""} on ${
-                    after.date || ""
-                  } at ${after.time || ""} is approved.`,
+                  body: `Your booking for ${after.service} is approved.`,
                 },
-                data: {
-                  type: "booking_approved",
-                  bookingId,
-                },
-              };
-
-              await admin.messaging().sendToDevice(token, message);
-              console.log("✅ Customer approval notification sent");
-            } else {
-              console.log("Customer has no fcmToken");
-            }
-          } else {
-            console.log("Customer document not found:", customerId);
+              }
+            );
           }
         }
       }
@@ -139,43 +115,54 @@ exports.onBookingStatusChange = functions.firestore
     if (before.assigned_employee_id !== after.assigned_employee_id) {
       const empId = after.assigned_employee_id;
       if (empId) {
-        console.log(
-          `Employee assigned changed for booking ${bookingId}:`,
-          empId
-        );
-
         const empDoc = await db.collection("employee").doc(empId).get();
-        if (!empDoc.exists) {
-          console.log("Employee document not found:", empId);
-        } else {
-          const token = empDoc.data().fcmToken;
-          if (token) {
-            const message = {
+        if (empDoc.exists && empDoc.data().fcmToken) {
+          await admin.messaging().sendToDevice(
+            empDoc.data().fcmToken,
+            {
               notification: {
                 title: "🧾 New Task Assigned",
-                body: `You have a new booking: ${
-                  after.service || ""
-                } for ${after.customer_name || ""} on ${
-                  after.date || ""
-                } at ${after.time || ""}.`,
+                body: `You have been assigned a new booking.`,
               },
-              data: {
-                type: "task_assigned",
-                bookingId,
-              },
-            };
-
-            await admin.messaging().sendToDevice(token, message);
-            console.log("✅ Employee task assignment notification sent");
-          } else {
-            console.log("Employee has no fcmToken");
-          }
+            }
+          );
         }
+      }
+    }
+
+    // c) 🔥 EMPLOYEE PROGRESS UPDATED → notify ADMIN
+    if (before.progress_status !== after.progress_status) {
+      console.log(
+        `Progress updated: ${before.progress_status} → ${after.progress_status}`
+      );
+
+      const adminSnap = await db.collection("admin").get();
+      const tokens = [];
+
+      adminSnap.forEach((doc) => {
+        const t = doc.data().fcmToken;
+        if (t) tokens.push(t);
+      });
+
+      if (tokens.length > 0) {
+        await admin.messaging().sendToDevice(tokens, {
+          notification: {
+            title: "📊 Booking Progress Updated",
+            body: `Employee moved ${after.customer_name} (${after.service}) to ${after.progress_status.toUpperCase()}`,
+          },
+          data: {
+            bookingId,
+            progress: after.progress_status,
+          },
+        });
+
+        console.log("✅ Admin notified for progress update");
       }
     }
 
     return null;
   });
+
 
 /**
  * 3️⃣ Scheduled: Daily reminder for tomorrow’s bookings

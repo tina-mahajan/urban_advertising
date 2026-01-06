@@ -8,6 +8,10 @@ import 'package:urban_advertising/services/reminder_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:urban_advertising/services/reminder_service.dart';
 import 'package:urban_advertising/services/attendance_service.dart';
+import 'package:urban_advertising/Employee/screens/report_problem_screen.dart';
+import 'package:urban_advertising/Employee/screens/gadget_responsibility_view.dart';
+import 'package:urban_advertising/Employee/screens/help_faq_screen.dart';
+import 'package:urban_advertising/Employee/screens/team_chat_screen.dart';
 
 import 'dart:math' as math;
 
@@ -688,33 +692,53 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
   }
 
   Widget _buildNewRequestsCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.warning),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.assignment_late,
-              color: AppColors.warning, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '$newRequestsCount New Project Requests',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, "/emp_slots");
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primaryAccent),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryAccent.withOpacity(0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
-          const Icon(Icons.arrow_forward_ios,
-              color: Colors.white),
-        ],
+          ],
+        ),
+        child: Row(
+          children: const [
+            Icon(
+              Icons.assignment_turned_in_outlined,
+              color: AppColors.primaryAccent,
+              size: 30,
+            ),
+            SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                "New Project Requests",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white54,
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _buildQuickActionsGrid(BuildContext context) {
     final actions = [
@@ -764,17 +788,56 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
 
         return GestureDetector(
           onTap: () {
-            if (a['label'] == 'Upload Data') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const UploadDataScreen(),
-                ),
-              );
-            }
+            switch (a['label']) {
+              case 'Upload Data':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UploadDataScreen(),
+                  ),
+                );
+                break;
 
-            // Add more navigation below if needed
-            // else if (a['label'] == 'Project Queue') {}
+              case 'Project Queue':
+              // intentionally left blank (as requested)
+                break;
+
+              case 'Report Prob':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ReportProblemScreen(),
+                  ),
+                );
+                break;
+
+              // case 'Resources':
+              //   Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //       builder: (_) => const ResourcesScreen(),
+              //     ),
+              //   );
+              //   break;
+
+              case 'Help & FAQ':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const HelpFaqScreen(),
+                  ),
+                );
+                break;
+
+              case 'Team Chat':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const TeamChatScreen(),
+                  ),
+                );
+                break;
+            }
           },
           child: _buildActionButton(
             a['icon'] as IconData,
@@ -782,6 +845,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
             a['color'] as Color,
           ),
         );
+
       },
     );
   }

@@ -27,14 +27,18 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF161B22),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           title: const Text("Confirmation",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: Text(message, style: const TextStyle(color: Colors.white70)),
+              style:
+              TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content:
+          Text(message, style: const TextStyle(color: Colors.white70)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel", style: TextStyle(color: Colors.redAccent)),
+              child:
+              const Text("Cancel", style: TextStyle(color: Colors.redAccent)),
             ),
             TextButton(
               onPressed: () {
@@ -103,10 +107,6 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
           final docs = snapshot.data!.docs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final assignedId = data["assigned_employee_id"];
-
-            // SHOW ONLY:
-            // 1. Requests assigned to this employee
-            // 2. Requests not assigned (just for viewing)
             return assignedId == null || assignedId == currentEmployeeId;
           }).toList();
 
@@ -126,17 +126,26 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
 
               final status = (data["status"] ?? "pending").toLowerCase();
               final assignedEmployeeId = data["assigned_employee_id"];
-
-              // Check if this employee is assigned
               final isAssignedToMe = assignedEmployeeId == currentEmployeeId;
 
               return GestureDetector(
                 onTap: () {
+                  // 🔒 BLOCK PENDING STATUS
+                  if (status == "pending") {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Waiting for admin approval"),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          BookingProgressScreen(bookingId: docId, data: data),
+                      builder: (_) => BookingProgressScreen(
+                          bookingId: docId, data: data),
                     ),
                   );
                 },
@@ -182,16 +191,11 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
 
                       const SizedBox(height: 12),
 
-                      // -----------------------------
-                      // STATUS LABEL
-                      // -----------------------------
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: status == "done"
-                              ? Colors.green.withOpacity(0.2)
-                              : status == "approved"
+                          color: status == "done" || status == "approved"
                               ? Colors.green.withOpacity(0.2)
                               : status == "rejected"
                               ? Colors.red.withOpacity(0.2)
@@ -201,9 +205,7 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
                         child: Text(
                           status.toUpperCase(),
                           style: TextStyle(
-                            color: status == "done"
-                                ? Colors.greenAccent
-                                : status == "approved"
+                            color: status == "done" || status == "approved"
                                 ? Colors.greenAccent
                                 : status == "rejected"
                                 ? Colors.redAccent
@@ -215,12 +217,7 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
 
                       const SizedBox(height: 12),
 
-                      // ===================================================
-                      //      EMPLOYEE BUTTON LOGIC (VERY IMPORTANT)
-                      // ===================================================
-
-                      if (isAssignedToMe && status == "approved") ...[
-                        // Only show when admin has assigned the task
+                      if (isAssignedToMe && status == "approved")
                         Row(
                           children: [
                             Expanded(
@@ -237,24 +234,8 @@ class _EmpSlotRequestsScreenState extends State<EmpSlotRequestsScreen> {
                                 child: const Text("Mark Done"),
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            // Expanded(
-                            //   child: ElevatedButton(
-                            //     onPressed: () {
-                            //       showConfirmDialog(
-                            //         message: "Reject this assigned task?",
-                            //         onConfirm: () =>
-                            //             updateSlotStatus(docId, "rejected"),
-                            //       );
-                            //     },
-                            //     style: ElevatedButton.styleFrom(
-                            //         backgroundColor: Colors.red),
-                            //     child: const Text("Reject"),
-                            //   ),
-                            // ),
                           ],
                         ),
-                      ],
 
                       if (!isAssignedToMe && status == "pending")
                         const Text(

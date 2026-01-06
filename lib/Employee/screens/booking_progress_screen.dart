@@ -35,46 +35,52 @@ class BookingProgressScreen extends StatelessWidget {
           final booking =
               snapshot.data!.data() as Map<String, dynamic>? ?? data;
 
-          String status = booking["status"] ?? "pending";
-          String progress = booking["progress_status"] ?? "approved";
+          final String status = booking["status"] ?? "pending";
+          final String progress =
+              booking["progress_status"] ?? "approved";
 
-          // 🔥 AUTO MARK DONE
-          if (progress == "delivered" && status != "done") {
-            FirebaseFirestore.instance
-                .collection("slot_request")
-                .doc(bookingId)
-                .update({"status": "done"});
-          }
-
-          if (status == "rejected") {
+          // 🔒 BLOCK PENDING (NO UI CHANGE)
+          if (status == "pending") {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _bookingDetails(booking),
-                    const SizedBox(height: 40),
-                    const Icon(Icons.cancel,
-                        color: Colors.redAccent, size: 80),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "This task was rejected.\nNo progress available.",
-                      textAlign: TextAlign.center,
-                      style:
-                      TextStyle(color: Colors.redAccent, fontSize: 18),
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.hourglass_empty,
+                      color: Colors.orangeAccent, size: 80),
+                  SizedBox(height: 20),
+                  Text(
+                    "Waiting for admin approval.\nYou cannot start this task yet.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 18),
+                  ),
+                ],
               ),
             );
           }
 
-          if (status == "done" || progress == "delivered") {
+          if (status == "rejected") {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.cancel,
+                      color: Colors.redAccent, size: 80),
+                  SizedBox(height: 20),
+                  Text(
+                    "This task was rejected.\nNo progress available.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.redAccent, fontSize: 18),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (status == "done") {
             return _completedView(booking);
           }
 
-          return _progressView(booking, progress);
+          return _progressView(context, booking, progress);
         },
       ),
     );
@@ -99,11 +105,6 @@ class BookingProgressScreen extends StatelessWidget {
             style: const TextStyle(color: Colors.white70)),
         Text("Time: ${b['time']}",
             style: const TextStyle(color: Colors.white70)),
-        if (b["assigned_employee_name"] != null)
-          Text(
-            "Assigned Employee: ${b['assigned_employee_name']}",
-            style: const TextStyle(color: Colors.greenAccent),
-          ),
         const SizedBox(height: 20),
         const Divider(color: Colors.white24),
       ],
@@ -142,10 +143,12 @@ class BookingProgressScreen extends StatelessWidget {
   }
 
   // ---------------- PROGRESS VIEW ----------------
-  Widget _progressView(Map<String, dynamic> booking, String progress) {
+  Widget _progressView(
+      BuildContext context, Map<String, dynamic> booking, String progress) {
     const steps = ["approved", "shooting", "editing", "delivered"];
-    int currentIndex = steps.indexOf(progress);
-    String nextStep = currentIndex < 3 ? steps[currentIndex + 1] : "delivered";
+    final int currentIndex = steps.indexOf(progress);
+    final String nextStep =
+    currentIndex < steps.length - 1 ? steps[currentIndex + 1] : "delivered";
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -168,17 +171,21 @@ class BookingProgressScreen extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                // 🔹 UPDATE PROGRESS
+                // 🔥 UPDATE PROGRESS
                 await FirebaseFirestore.instance
                     .collection("slot_request")
                     .doc(bookingId)
-                    .update({"progress_status": nextStep});
+                    .update({
+                  "progress_status": nextStep,
+                  "updated_at": FieldValue.serverTimestamp(),
+                  "last_updated_by": "employee",
+                  if (nextStep == "delivered") "status": "done",
+                });
 
-                // 🔔 NOTIFY ADMIN
+                // 🔔 ADMIN NOTIFICATION (WORKING)
                 await _notifyAdmin(
                   bookingId: bookingId,
-                  customerName:
-                  booking["customer_name"] ?? "Customer",
+                  customerName: booking["customer_name"] ?? "Customer",
                   service: booking["service"] ?? "Service",
                   progress: nextStep,
                 );
@@ -252,7 +259,7 @@ class BookingProgressScreen extends StatelessWidget {
         "token": token,
         "title": "Booking Progress Updated",
         "body":
-        "$customerName's booking ($service) moved to ${progress.toUpperCase()}",
+        "Employee updated $customerName's booking ($service) to ${progress.toUpperCase()}",
         "bookingId": bookingId,
         "createdAt": FieldValue.serverTimestamp(),
       });

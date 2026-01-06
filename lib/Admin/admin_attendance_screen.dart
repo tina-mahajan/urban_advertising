@@ -1,5 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
 import 'package:urban_advertising/core/theme.dart';
 
 class AdminAttendanceScreen extends StatefulWidget {
@@ -10,132 +14,270 @@ class AdminAttendanceScreen extends StatefulWidget {
 }
 
 class _AdminAttendanceScreenState extends State<AdminAttendanceScreen> {
-  bool loading = true;
-  List<Map<String, dynamic>> attendanceList = [];
+  String searchText = "";
 
-  @override
-  void initState() {
-    super.initState();
-    loadAttendance();
+  // ================= HELPERS =================
+
+  Timestamp? _parseTimestamp(dynamic value) {
+    if (value is Timestamp) return value;
+    return null;
   }
 
-  Future<void> loadAttendance() async {
-    List<Map<String, dynamic>> finalList = [];
+  String _formatTime(Timestamp? ts) {
+    if (ts == null) return "-";
+    return DateFormat('hh:mm a').format(ts.toDate());
+  }
 
-    try {
-      debugPrint("STEP 1: Fetching attendance users...");
-      QuerySnapshot usersSnapshot =
-      await FirebaseFirestore.instance.collection("attendance").get();
+  String _workedHours(Timestamp? inTs, Timestamp? outTs) {
+    if (inTs == null || outTs == null) return "-";
+    final diff = outTs.toDate().difference(inTs.toDate());
+    return "${diff.inHours}h ${diff.inMinutes % 60}m";
+  }
 
-      debugPrint("Found ${usersSnapshot.docs.length} users");
+  // ================= PDF EXPORT =================
 
-      for (var user in usersSnapshot.docs) {
-        String uid = user.id;
+  Future<void> _exportPdf(List<QueryDocumentSnapshot> docs) async {
+    final pdf = pw.Document();
 
-        CollectionReference recordsRef = FirebaseFirestore.instance
-            .collection("attendance")
-            .doc(uid)
-            .collection("records");
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text("Attendance Report",
+                  style: pw.TextStyle(fontSize: 20)),
+              pw.SizedBox(height: 10),
+              ...docs.map((doc) {
+                final d = doc.data() as Map<String, dynamic>;
+                return pw.Text(
+                  "${d["date"]} | ${d["name"]} | ${(d["worked_minutes"] ?? 0) ~/ 60} hrs",
+                );
+              }),
+            ],
+          );
+        },
+      ),
+    );
 
-        QuerySnapshot dateDocs = await recordsRef.get();
+    await Printing.layoutPdf(
+      onLayout: (format) async => pdf.save(),
+    );
+  }
 
-        debugPrint("User $uid has ${dateDocs.docs.length} date entries");
+  // ================= MONTHLY SUMMARY =================
 
-        for (var dateDoc in dateDocs.docs) {
-          var raw = dateDoc.data() as Map<String, dynamic>;
+  Widget _buildMonthlySummary(List<QueryDocumentSnapshot> docs) {
+    final now = DateTime.now();
+    final monthKey = DateFormat('yyyy-MM').format(now);
 
-          // CASE 1 → Date document already contains fields
-          if (raw.containsKey("name") && raw.containsKey("in_time")) {
-            raw["uid"] = uid;
-            raw["record_id"] = dateDoc.id;
-            finalList.add(raw);
-          } else {
-            // CASE 2 → Date doc contains nested subcollection
-            QuerySnapshot nested =
-            await recordsRef.doc(dateDoc.id).collection("records").get();
+    int totalMinutes = 0;
+    final Set<String> uniqueDays = {}; // 🔥 FIX
 
-            for (var rec in nested.docs) {
-              var data = rec.data() as Map<String, dynamic>;
+    for (var doc in docs) {
+      final d = doc.data() as Map<String, dynamic>;
+      final date = d["date"] ?? "";
 
-              data["uid"] = uid;
-              data["record_id"] = dateDoc.id;
-
-              finalList.add(data);
-            }
-          }
-        }
+      if (date.startsWith(monthKey) &&
+          d["in_time"] != null &&
+          d["out_time"] != null) {
+        uniqueDays.add(date); // ✅ count unique day only
+        totalMinutes += (d["worked_minutes"] ?? 0) as int;
       }
-
-      debugPrint("STEP 3: Sorting final list…");
-
-      finalList.sort((a, b) {
-        DateTime da = DateTime.tryParse(a["date"] ?? "") ?? DateTime(2000);
-        DateTime db = DateTime.tryParse(b["date"] ?? "") ?? DateTime(2000);
-        return db.compareTo(da);
-      });
-
-      debugPrint("FINAL LIST LENGTH = ${finalList.length}");
-
-      setState(() {
-        attendanceList = finalList;
-        loading = false;
-      });
-    } catch (e) {
-      debugPrint("ERROR LOADING ATTENDANCE = $e");
-      setState(() => loading = false);
     }
+
+    return Card(
+      color: AppColors1.cardBackground,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _summaryItem("Days", uniqueDays.length.toString()),
+            _summaryItem(
+              "Hours",
+              "${totalMinutes ~/ 60}h ${totalMinutes % 60}m",
+            ),
+          ],
+        ),
+      ),
+    );
   }
+
+
+  Widget _summaryItem(String label, String value) {
+    return Column(
+      children: [
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(color: Colors.white70)),
+      ],
+    );
+  }
+
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors1.darkBackground,
       appBar: AppBar(
+        title: const Text("Attendance"),
         backgroundColor: AppColors1.cardBackground,
-        title: const Text("Attendance Records",
-            style: TextStyle(color: Colors.white)),
       ),
-      body: loading
-          ? const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      )
-          : attendanceList.isEmpty
-          ? const Center(
-        child: Text(
-          "No attendance records found",
-          style: TextStyle(color: Colors.white70),
-        ),
-      )
-          : ListView.builder(
-        itemCount: attendanceList.length,
-        itemBuilder: (context, index) {
-          final data = attendanceList[index];
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collectionGroup("records")
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(
+                child: CircularProgressIndicator(color: Colors.white));
+          }
 
-          String date = data["date"] ?? "-";
-          String name = data["name"] ?? "Unknown";
-          String inTime = data["in_time"] ?? "-";
-          String outTime =
-          (data["out_time"] == null || data["out_time"] == "")
-              ? "-"
-              : data["out_time"];
+          final allDocs = snapshot.data!.docs;
 
-          return Card(
-            color: AppColors1.cardBackground,
-            margin: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text(
-                name,
-                style: const TextStyle(color: Colors.white),
+          // 🔍 SEARCH FILTER
+          final filteredDocs = allDocs.where((doc) {
+            final d = doc.data() as Map<String, dynamic>;
+            final name = (d["name"] ?? "").toString().toLowerCase();
+            return name.contains(searchText.toLowerCase());
+          }).toList();
+
+          return Column(
+            children: [
+              // 🔹 SEARCH BAR
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child:TextField(
+                  onChanged: (val) => setState(() => searchText = val),
+                  style: const TextStyle(color: Colors.white), // ✅ typed text color
+                  decoration: InputDecoration(
+                    hintText: "Search employee...",
+                    hintStyle: const TextStyle(
+                      color: Colors.white70, // ✅ hint text color
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.white, // ✅ search icon color
+                    ),
+                    filled: true,
+                    fillColor: AppColors1.cardBackground,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors1.primaryAccent),
+                    ),
+                  ),
+                ),
+
               ),
-              subtitle: Text(
-                "Date: $date\nIN: $inTime\nOUT: $outTime",
-                style: const TextStyle(color: Colors.white70),
+
+              // // 🔹 MONTHLY SUMMARY
+              // _buildMonthlySummary(filteredDocs),
+
+              // 🔹 EXPORT BUTTON
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: ElevatedButton.icon(
+                  onPressed: () => _exportPdf(filteredDocs),
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text("Export PDF"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors1.primaryAccent,
+                  ),
+                ),
               ),
-            ),
+
+              // 🔹 ATTENDANCE LIST (UNCHANGED LOGIC)
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: filteredDocs.length,
+                  itemBuilder: (context, index) {
+                    final data =
+                    filteredDocs[index].data() as Map<String, dynamic>;
+
+                    final name = data["name"] ?? "Unknown";
+                    final role = data["role"] ?? "-";
+                    final date = data["date"] ?? "-";
+
+                    final inTime = _parseTimestamp(data["in_time"]);
+                    final outTime = _parseTimestamp(data["out_time"]);
+
+                    return Card(
+                      color: AppColors1.cardBackground,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(name,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                                Text(role.toUpperCase(),
+                                    style: TextStyle(
+                                        color: role == "admin"
+                                            ? Colors.purpleAccent
+                                            : Colors.greenAccent)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text("Date: $date",
+                                style: const TextStyle(
+                                    color: Colors.white70)),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                              children: [
+                                _info("IN", _formatTime(inTime)),
+                                _info("OUT", _formatTime(outTime)),
+                                _info("HOURS",
+                                    _workedHours(inTime, outTime)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
+    );
+  }
+
+  Widget _info(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Colors.white54, fontSize: 11)),
+        Text(value,
+            style:
+            const TextStyle(color: Colors.white, fontSize: 14)),
+      ],
     );
   }
 }

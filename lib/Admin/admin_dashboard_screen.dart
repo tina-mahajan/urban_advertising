@@ -20,12 +20,9 @@ import 'package:urban_advertising/Admin/admin_settings_screen.dart';
 import 'package:urban_advertising/Admin/admin_revenue_screen.dart';
 import 'package:urban_advertising/Admin/admin_attendance_screen.dart';
 import 'package:urban_advertising/Admin/admin_services_screen.dart';
-import 'package:urban_advertising/services/attendance_service.dart';
-<<<<<<< HEAD
-=======
 import 'package:urban_advertising/Admin/admin_add_video_task_screen.dart';
 
->>>>>>> 624ef3d44f925e0cc90611cc352218e30426f78c
+import 'package:urban_advertising/services/attendance_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urban_advertising/screens/auth/login_screen.dart';
@@ -352,8 +349,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 12),
             _buildQuickActionsGrid(context),
 
-            //add video task button
             const SizedBox(height: 24),
+
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -382,7 +379,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
             ),
-
 
             // ================== CALENDAR ==================
             _buildSectionHeader("Booking Calendar"),
@@ -1170,3 +1166,4 @@ class _StatusCard extends StatelessWidget {
     );
   }
 }
+//original code

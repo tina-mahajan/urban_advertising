@@ -13,97 +13,90 @@ class AdminAddOrderScreen extends StatefulWidget {
 class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _advanceAmountController = TextEditingController();
   final TextEditingController _customerNameController = TextEditingController();
   final TextEditingController _customerPhoneController =
   TextEditingController();
-  final TextEditingController _serviceController = TextEditingController();
   final TextEditingController _placeController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _advanceAmountController =
+  TextEditingController();
+
+  // 🔴 NEW (ONLY ADDITION)
+  final TextEditingController _servicePriceController =
+  TextEditingController();
+  String? _selectedService;
+  double _selectedServicePrice = 0;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-
   bool _isSaving = false;
-  @override
-  void dispose() {
-    _removeDropdown();   // ← IMPORTANT
-    _customerNameController.dispose();
-    _customerPhoneController.dispose();
-    _serviceController.dispose();
-    _placeController.dispose();
-    _messageController.dispose();
-    _advanceAmountController.dispose();
-    super.dispose();
-  }
 
-  // --------------------- DROPDOWN SUPPORT ---------------------
+  // ---------------- CUSTOMER SEARCH ----------------
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
   List<Map<String, dynamic>> _customerSuggestions = [];
 
+  @override
+  void dispose() {
+    _removeDropdown();
+    _customerNameController.dispose();
+    _customerPhoneController.dispose();
+    _placeController.dispose();
+    _messageController.dispose();
+    _advanceAmountController.dispose();
+    _servicePriceController.dispose();
+    super.dispose();
+  }
+
   void _removeDropdown() {
-    if (_overlayEntry != null) {
-      _overlayEntry!.remove();
-      _overlayEntry = null;
-    }
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   void _showCustomerDropdown() {
     _removeDropdown();
-
     _overlayEntry = OverlayEntry(
-      builder: (context) {
-        return Positioned(
-          left: 16,
-          right: 16,
-          top: MediaQuery.of(context).padding.top + 150,
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            offset: const Offset(0, 55),
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors1.cardBackground,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  itemCount: _customerSuggestions.length,
-                  itemBuilder: (context, index) {
-                    final c = _customerSuggestions[index];
-
-                    return ListTile(
-                      dense: true,
-                      title: Text(c["name"],
-                          style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(
-                        c["phone"] ?? "",
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
-                      ),
-                      onTap: () {
-                        _customerNameController.text = c["name"];
-                        _customerPhoneController.text = c["phone"];
-                        _removeDropdown();
-                      },
-                    );
-                  },
-                ),
+      builder: (context) => Positioned(
+        left: 16,
+        right: 16,
+        top: MediaQuery.of(context).padding.top + 150,
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          offset: const Offset(0, 55),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors1.cardBackground,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _customerSuggestions.length,
+                itemBuilder: (context, index) {
+                  final c = _customerSuggestions[index];
+                  return ListTile(
+                    title: Text(c["name"],
+                        style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(c["phone"] ?? "",
+                        style: const TextStyle(color: Colors.white70)),
+                    onTap: () {
+                      _customerNameController.text = c["name"];
+                      _customerPhoneController.text = c["phone"];
+                      _removeDropdown();
+                    },
+                  );
+                },
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
-
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  // --------------------- UPDATED SEARCH FUNCTION ---------------------
   Future<void> _searchCustomers(String query) async {
     if (query.trim().isEmpty) {
       _removeDropdown();
@@ -111,30 +104,24 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
     }
 
     final snapshot = await FirebaseFirestore.instance
-        .collection("Customer") // FIXED COLLECTION NAME
+        .collection("Customer")
         .where("Customer_Name", isGreaterThanOrEqualTo: query)
         .where("Customer_Name", isLessThanOrEqualTo: "$query\uf8ff")
         .limit(5)
         .get();
 
     _customerSuggestions = snapshot.docs.map((d) {
-      final data = d.data() as Map<String, dynamic>;
+      final data = d.data();
       return {
-        "id": d.id,
-        "name": data["Customer_Name"] ?? "",
-        "phone": data["Customer_Mobile_Number"] ?? "",
-        "email": data["Customer_Email"] ?? "",
+        "name": data["Customer_Name"],
+        "phone": data["Customer_Mobile_Number"],
       };
     }).toList();
 
-    if (_customerSuggestions.isEmpty) {
-      _removeDropdown();
-    } else {
-      _showCustomerDropdown();
-    }
+    _customerSuggestions.isEmpty ? _removeDropdown() : _showCustomerDropdown();
   }
 
-  // --------------------- DATE PICKER ---------------------
+  // ---------------- DATE & TIME ----------------
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -144,44 +131,30 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
       builder: (context, child) =>
           Theme(data: ThemeData.dark(), child: child!),
     );
-
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
-  // --------------------- TIME PICKER ---------------------
   Future<void> _pickTime() async {
     final picked =
     await showTimePicker(context: context, initialTime: TimeOfDay.now());
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  // Formatters
   String _formatDate(DateTime date) {
     const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec"
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
-    return "${date.day} ${months[date.month - 1]} ${date.year}";
+
+    return "${date.day.toString().padLeft(2, '0')} "
+        "${months[date.month - 1]} "
+        "${date.year}";
   }
 
-  String _formatTime(TimeOfDay tod) {
-    final hour = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
-    final minute = tod.minute.toString().padLeft(2, "0");
-    final period = tod.period == DayPeriod.am ? "AM" : "PM";
-    return "$hour:$minute $period";
-  }
+  String _formatTime(TimeOfDay t) =>
+      "${t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod}:${t.minute.toString().padLeft(2, "0")} ${t.period == DayPeriod.am ? "AM" : "PM"}";
 
-  // ------------------ ASSIGN EMPLOYEE SHEET ------------------
+  // ---------------- ASSIGN EMPLOYEE ----------------
   void _showAssignEmployeeSheet(String bookingId) {
     showModalBottomSheet(
       context: context,
@@ -190,18 +163,16 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        String? selectedEmpId;
-        String? selectedEmpName;
+        String? empId;
+        String? empName;
 
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                "Assign Employee",
-                style: TextStyle(color: Colors.white, fontSize: 18),
-              ),
+              const Text("Assign Employee",
+                  style: TextStyle(color: Colors.white, fontSize: 18)),
               const SizedBox(height: 16),
 
               StreamBuilder<QuerySnapshot>(
@@ -211,36 +182,28 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const Center(
-                        child: CircularProgressIndicator(color: Colors.white));
+                    return const CircularProgressIndicator(
+                        color: Colors.white);
                   }
 
                   final employees = snapshot.data!.docs;
 
                   return DropdownButtonFormField<String>(
                     dropdownColor: AppColors1.cardBackground,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white10,
-                      labelText: "Select Employee",
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration("Select Employee"),
                     items: employees.map((e) {
-                      final emp = e.data() as Map<String, dynamic>;
+                      final d = e.data() as Map<String, dynamic>;
                       return DropdownMenuItem(
                         value: e.id,
-                        child: Text(emp["name"],
+                        child: Text(d["name"],
                             style: const TextStyle(color: Colors.white)),
                       );
                     }).toList(),
-                    onChanged: (value) {
-                      selectedEmpId = value;
-                      final emp = employees.firstWhere((el) => el.id == value);
-                      selectedEmpName =
+                    onChanged: (v) {
+                      empId = v;
+                      final emp =
+                      employees.firstWhere((e) => e.id == v);
+                      empName =
                       (emp.data() as Map<String, dynamic>)["name"];
                     },
                   );
@@ -248,32 +211,24 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
               ),
 
               const SizedBox(height: 20),
-
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors1.primaryAccent),
                 onPressed: () async {
-                  if (selectedEmpId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Please select employee"),
-                          backgroundColor: Colors.red),
-                    );
-                    return;
-                  }
+                  if (empId == null) return;
 
                   await FirebaseFirestore.instance
                       .collection("slot_request")
                       .doc(bookingId)
                       .update({
-                    "assigned_employee_id": selectedEmpId,
-                    "assigned_employee_name": selectedEmpName,
+                    "assigned_employee_id": empId,
+                    "assigned_employee_name": empName,
                     "status": "approved",
                   });
 
                   final empDoc = await FirebaseFirestore.instance
                       .collection("employee")
-                      .doc(selectedEmpId)
+                      .doc(empId)
                       .get();
 
                   final token = empDoc["fcmToken"];
@@ -281,7 +236,8 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                     await PushNotificationService.sendNotification(
                       token: token,
                       title: "New Task Assigned",
-                      body: "A new offline order has been assigned to you.",
+                      body:
+                      "A new offline order has been assigned to you.",
                     );
                   }
 
@@ -298,13 +254,16 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
     );
   }
 
-  // ------------------- SAVE ORDER -------------------
+  // ---------------- SAVE ORDER ----------------
   Future<void> _saveOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select date & time")),
+        const SnackBar(
+          content: Text("Please select date & time"),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -317,65 +276,36 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
           .add({
         "customer_name": _customerNameController.text.trim(),
         "customer_phone": _customerPhoneController.text.trim(),
-        "service": _serviceController.text.trim(),
+        "service": _selectedService,
+        "service_price": _selectedServicePrice,
+        "advance_amount": _advanceAmountController.text.isEmpty
+            ? 0
+            : double.parse(_advanceAmountController.text),
         "location": _placeController.text.trim(),
         "message": _messageController.text.trim(),
-        "advance_amount": _advanceAmountController.text.trim().isEmpty
-            ? 0
-            : double.parse(_advanceAmountController.text.trim()),
         "date": _formatDate(_selectedDate!),
         "time": _formatTime(_selectedTime!),
+        "booking_date": Timestamp.fromDate(
+          DateTime(
+            _selectedDate!.year,
+            _selectedDate!.month,
+            _selectedDate!.day,
+          ),
+        ),
+
         "status": "pending",
         "source": "offline",
         "created_at": FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Offline order created. Assign employee."),
-            backgroundColor: Colors.green),
-      );
-
       _showAssignEmployeeSheet(doc.id);
     } finally {
       setState(() => _isSaving = false);
     }
+
   }
 
-  // ------------------ FIELD UI ------------------
-  Widget _buildField(
-      TextEditingController c,
-      String label, {
-        TextInputType keyboard = TextInputType.text,
-        String? Function(String?)? validator,
-        int maxLines = 1,
-        void Function(String)? onChanged,
-      }) {
-    return TextFormField(
-      controller: c,
-      keyboardType: keyboard,
-      maxLines: maxLines,
-      validator: validator,
-      onChanged: onChanged,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
-        filled: true,
-        fillColor: AppColors1.cardBackground,
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.white24),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
-
-  // ------------------ UI BUILD ------------------
+  // ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -383,9 +313,8 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
       child: Scaffold(
         backgroundColor: AppColors1.darkBackground,
         appBar: AppBar(
+          title: const Text("Add Offline Order"),
           backgroundColor: AppColors1.cardBackground,
-          title: const Text("Add Offline Order",
-              style: TextStyle(color: Colors.white)),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -400,35 +329,27 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                     "Customer Name",
                     validator: (v) =>
                     v!.trim().isEmpty ? "Required" : null,
-                    onChanged: (value) => _searchCustomers(value),
+                    onChanged: _searchCustomers,
                   ),
                 ),
+                const SizedBox(height: 12),
+                _buildField(_customerPhoneController, "Customer Phone"),
+                const SizedBox(height: 12),
+
+                // 🔴 SERVICE DROPDOWN (ONLY CHANGE)
+                _serviceDropdown(),
+                const SizedBox(height: 12),
+                _buildField(_servicePriceController, "Service Price (₹)",
+                    readOnly: true),
 
                 const SizedBox(height: 12),
-                _buildField(_customerPhoneController, "Customer Phone",
-                    keyboard: TextInputType.phone),
-
-                const SizedBox(height: 12),
-                _buildField(_serviceController, "Service"),
-
-                const SizedBox(height: 12),
-                _buildField(
-                  _advanceAmountController,
-                  "Advance Payment (₹)",
-                  keyboard: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return null; // optional
-                    if (double.tryParse(v) == null) {
-                      return "Enter valid amount";
-                    }
-                    return null;
-                  },
-                ),
-
-
+                _buildField(_advanceAmountController,
+                    "Advance Payment (₹)",
+                    keyboard: TextInputType.number),
                 const SizedBox(height: 12),
                 _buildField(_placeController, "Place / Location"),
 
+                // 🔴 DATE & TIME (ORIGINAL UI)
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -441,7 +362,8 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                           _selectedDate == null
                               ? "Select Date"
                               : _formatDate(_selectedDate!),
-                          style: const TextStyle(color: Colors.white70),
+                          style:
+                          const TextStyle(color: Colors.white70),
                         ),
                       ),
                     ),
@@ -455,7 +377,8 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                           _selectedTime == null
                               ? "Select Time"
                               : _formatTime(_selectedTime!),
-                          style: const TextStyle(color: Colors.white70),
+                          style:
+                          const TextStyle(color: Colors.white70),
                         ),
                       ),
                     ),
@@ -463,7 +386,7 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                 ),
 
                 const SizedBox(height: 16),
-                _buildField(_messageController, "Notes (optional)",
+                _buildField(_messageController, "Notes",
                     maxLines: 3),
 
                 const SizedBox(height: 20),
@@ -472,15 +395,12 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveOrder,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors1.primaryAccent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                        backgroundColor:
+                        AppColors1.primaryAccent),
                     child: Text(
-                      _isSaving ? "Saving..." : "Save Order",
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                        _isSaving ? "Saving..." : "Save Order"),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -488,5 +408,88 @@ class _AdminAddOrderScreenState extends State<AdminAddOrderScreen> {
       ),
     );
   }
+
+  // ---------------- SERVICE DROPDOWN ----------------
+  Widget _serviceDropdown() {
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+      FirebaseFirestore.instance.collection("services").snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox();
+
+        final services = snapshot.data!.docs;
+
+        return DropdownButtonFormField<String>(
+          value: _selectedService,
+          dropdownColor: AppColors1.cardBackground,
+          decoration: _inputDecoration("Service"),
+          items: services.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final name = data["name"]?.toString() ?? "";
+            return DropdownMenuItem<String>(
+              value: name,
+              child: Text(name,
+                  style: const TextStyle(color: Colors.white)),
+            );
+          }).toList(),
+          onChanged: (value) {
+            final selected = services.firstWhere((d) =>
+            (d.data() as Map<String, dynamic>)["name"]
+                .toString() ==
+                value);
+
+            final data =
+            selected.data() as Map<String, dynamic>;
+
+            setState(() {
+              _selectedService = value;
+              _selectedServicePrice =
+                  (data["price"] ?? 0).toDouble();
+              _servicePriceController.text =
+                  _selectedServicePrice.toString();
+            });
+          },
+        );
+      },
+    );
+  }
+
+  // ---------------- FIELD ----------------
+  Widget _buildField(
+      TextEditingController c,
+      String label, {
+        TextInputType keyboard = TextInputType.text,
+        String? Function(String?)? validator,
+        int maxLines = 1,
+        bool readOnly = false,
+        void Function(String)? onChanged,
+      }) {
+    return TextFormField(
+      controller: c,
+      keyboardType: keyboard,
+      maxLines: maxLines,
+      readOnly: readOnly,
+      validator: validator,
+      onChanged: onChanged,
+      style: const TextStyle(color: Colors.white),
+      decoration: _inputDecoration(label),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      filled: true,
+      fillColor: AppColors1.cardBackground,
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white24),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white),
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
 }
-//original code

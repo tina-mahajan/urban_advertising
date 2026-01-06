@@ -300,20 +300,29 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                         String selectedDateStr =
                         DateFormat("dd MMM yyyy").format(selectedDate);
 
+                        // QuerySnapshot existingSlot =
+                        // await FirebaseFirestore.instance
+                        //     .collection("slot_request")
+                        //     .where("date",
+                        //     isEqualTo: selectedDateStr)
+                        //     .where("time",
+                        //     isEqualTo: selectedSlot!)
+                        //     .where("status", whereIn: [
+                        //   "pending",
+                        //   "approved",
+                        //   "shooting",
+                        //   "editing"
+                        // ])
+                        //     .get();
                         QuerySnapshot existingSlot =
                         await FirebaseFirestore.instance
                             .collection("slot_request")
-                            .where("date",
-                            isEqualTo: selectedDateStr)
-                            .where("time",
-                            isEqualTo: selectedSlot!)
-                            .where("status", whereIn: [
-                          "pending",
-                          "approved",
-                          "shooting",
-                          "editing"
-                        ])
+                            .where("date", isEqualTo: selectedDateStr)
+                            .where("time", isEqualTo: selectedSlot!)
+                            .where("isActive", isEqualTo: true)
+                            .limit(1)
                             .get();
+
 
                         if (existingSlot.docs.isNotEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -348,6 +357,7 @@ class _SlotBookingScreenState extends State<SlotBookingScreen> {
                           "service": "Daily Photo Shoot",
                           "message": "",
                           "status": "pending",
+                          "isActive": true,
                           "created_at": Timestamp.now(),
                         });
 
