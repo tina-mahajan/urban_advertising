@@ -21,6 +21,7 @@ import 'package:urban_advertising/Admin/admin_revenue_screen.dart';
 import 'package:urban_advertising/Admin/admin_attendance_screen.dart';
 import 'package:urban_advertising/Admin/admin_services_screen.dart';
 import 'package:urban_advertising/Admin/admin_add_video_task_screen.dart';
+import 'package:urban_advertising/Admin/admin_video_tasks_list_screen.dart';
 
 import 'package:urban_advertising/services/attendance_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -77,6 +78,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         .snapshots()
         .map((snap) => snap.docs.length);
   }
+  Stream<int> videoTaskCountByStatus(String status) {
+    return FirebaseFirestore.instance
+        .collection("video_tasks")
+        .where("status", isEqualTo: status)
+        .snapshots()
+        .map((snap) => snap.docs.length);
+  }
+
 
   @override
   void initState() {
@@ -307,6 +316,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             const SizedBox(height: 18),
 
+
             // ================== STATUS CARDS ==================
             _buildSectionHeader("Today’s Booking Status"),
             const SizedBox(height: 10),
@@ -344,12 +354,96 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             const SizedBox(height: 22),
 
+            const SizedBox(height: 26),
+
+// ================== VIDEO TASK STATUS ==================
+            _buildSectionHeader("Video Task Progress"),
+            const SizedBox(height: 10),
+
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminVideoTasksListScreen(
+                            status: "pending",
+                            title: "Pending Video Tasks",
+                          ),
+                        ),
+                      );
+                    },
+                    child: _StatusCard(
+                      label: "Pending",
+                      status: "pending",
+                      stream: videoTaskCountByStatus("pending"),
+                      color: Colors.orangeAccent,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminVideoTasksListScreen(
+                            status: "in_progress",
+                            title: "In-Progress Video Tasks",
+                          ),
+                        ),
+                      );
+                    },
+                    child: _StatusCard(
+                      label: "In Progress",
+                      status: "in_progress",
+                      stream: videoTaskCountByStatus("in_progress"),
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminVideoTasksListScreen(
+                            status: "done",
+                            title: "Completed Video Tasks",
+                          ),
+                        ),
+                      );
+                    },
+                    child: _StatusCard(
+                      label: "Done",
+                      status: "done",
+                      stream: videoTaskCountByStatus("done"),
+                      color: Colors.greenAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+
+
             // ================== QUICK ACTIONS GRID ==================
             _buildSectionHeader("Quick Actions"),
             const SizedBox(height: 12),
             _buildQuickActionsGrid(context),
 
+
             const SizedBox(height: 24),
+
 
             // GestureDetector(
             //   onTap: () {
@@ -447,18 +541,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onTap: _onNavTap,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            label: 'Dashboard',
+            icon: Icon(Icons.dashboard),
+            label: "Dashboard",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_outlined),
-            label: 'Add Order',
+            icon: Icon(Icons.add_circle_outline),
+            label: "Add Order",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.logout),
-            label: 'Logout',
+            icon: Icon(Icons.video_call),
+            label: "Video Tasks",
           ),
         ],
+
       ),
     );
   }
@@ -603,54 +698,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // =========================== NAV TAP ===========================
 
   Future<void> _onNavTap(int index) async {
+    setState(() {
+      _currentIndex = index;
+    });
+
     if (index == 0) {
-      setState(() {
-        _currentIndex = 0;
-      });
-    } else if (index == 1) {
+      // Dashboard → stay here
+      return;
+    }
+
+    if (index == 1) {
+      // Add Order
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const AdminAddOrderScreen()),
-      );
-    } else if (index == 2) {
-      // 🔥 LOGOUT CONFIRMATION
-      bool? confirmLogout = await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Logout"),
-            ),
-          ],
+        MaterialPageRoute(
+          builder: (_) => const AdminAddOrderScreen(),
         ),
       );
+      return;
+    }
 
-      if (confirmLogout == true) {
-        // ✅ 1. Firebase Sign Out
-        await FirebaseAuth.instance.signOut();
-
-        // ✅ 2. Clear SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-
-        if (!mounted) return;
-
-        // ✅ 3. Navigate to Login & clear stack
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-        );
-      }
+    if (index == 2) {
+      // ✅ Add Video Task (Logout REMOVED)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AdminAddVideoTaskScreen(),
+        ),
+      );
+      return;
     }
   }
+
   // =========================== CALENDAR ===========================
 
   Widget _buildCalendar() {
@@ -1165,5 +1244,13 @@ class _StatusCard extends StatelessWidget {
       },
     );
   }
+  Stream<int> videoTaskCountByStatus(String status) {
+    return FirebaseFirestore.instance
+        .collection("video_tasks")
+        .where("status", isEqualTo: status)
+        .snapshots()
+        .map((snap) => snap.docs.length);
+  }
+
 }
 //original code
