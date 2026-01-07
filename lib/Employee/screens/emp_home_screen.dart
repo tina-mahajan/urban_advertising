@@ -86,6 +86,8 @@ class EmployeeHomeScreen extends StatefulWidget {
 class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
   String employeeName = "";
   String employeeEmail = "";
+  String employeeId = "";
+
   bool isLoading = false;
 
   // -------------- NEW CALENDAR VARIABLES --------------
@@ -757,17 +759,6 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         'icon': Icons.video_camera_back,
         'color': Colors.purpleAccent
       },
-
-      {
-        'label': 'Report Prob',
-        'icon': Icons.bug_report,
-        'color': AppColors.errors
-      },
-      {
-        'label': 'Resources',
-        'icon': Icons.folder_open,
-        'color': Colors.amber
-      },
       {
         'label': 'Help & FAQ',
         'icon': Icons.help_outline,
@@ -778,6 +769,18 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         'icon': Icons.chat_bubble_outline,
         'color': Colors.pinkAccent
       },
+      {
+        'label': 'Report Prob',
+        'icon': Icons.bug_report,
+        'color': AppColors.errors
+      },
+      {
+        'label': 'Resources',
+        'icon': Icons.devices_other,
+        'color': AppColors.secondaryAccent
+      },
+
+
     ];
 
     return GridView.builder(
@@ -794,56 +797,6 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
 
         return GestureDetector(
           onTap: () {
-
-            switch (a['label']) {
-              case 'Upload Data':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const UploadDataScreen(),
-                  ),
-                );
-                break;
-
-              case 'Project Queue':
-              // intentionally left blank (as requested)
-                break;
-
-              case 'Report Prob':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ReportProblemScreen(),
-                  ),
-                );
-                break;
-
-              // case 'Resources':
-              //   Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //       builder: (_) => const ResourcesScreen(),
-              //     ),
-              //   );
-              //   break;
-
-              case 'Help & FAQ':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const HelpFaqScreen(),
-                  ),
-                );
-                break;
-
-              case 'Team Chat':
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const TeamChatScreen(),
-                  ),
-                );
-                break;
             if (a['label'] == 'Upload Data') {
               Navigator.push(
                 context,
@@ -851,8 +804,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
                   builder: (_) => const UploadDataScreen(),
                 ),
               );
-            }
-            else if (a['label'] == 'Video Tasks') {
+            } else if (a['label'] == 'Video Tasks') {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -861,20 +813,51 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
                   ),
                 ),
               );
+            } else if (a['label'] == 'Report Prob') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ReportProblemScreen(),
+                ),
+              );
+            } else if (a['label'] == 'Resources') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const GadgetResponsibilityView(),
+                ),
+              );
+            }
 
+
+
+
+            else if (a['label'] == 'Help & FAQ') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const HelpFaqScreen(),
+                ),
+              );
+            } else if (a['label'] == 'Team Chat') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TeamChatScreen(),
+                ),
+              );
             }
           },
-
           child: _buildActionButton(
             a['icon'] as IconData,
             a['label'] as String,
             a['color'] as Color,
           ),
         );
-
       },
     );
   }
+
 
 
   Widget _buildActionButton(IconData icon, String label, Color color) {

@@ -22,6 +22,9 @@ import 'package:urban_advertising/Admin/admin_attendance_screen.dart';
 import 'package:urban_advertising/Admin/admin_services_screen.dart';
 import 'package:urban_advertising/Admin/admin_add_video_task_screen.dart';
 import 'package:urban_advertising/Admin/admin_video_tasks_list_screen.dart';
+import 'package:urban_advertising/Admin/screens/admin_gadget_responsibility_screen.dart';
+import 'package:urban_advertising/Admin/screens/admin_team_chat_screen.dart';
+import 'package:urban_advertising/Admin/screens/admin_report_problem_view.dart';
 
 import 'package:urban_advertising/services/attendance_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -609,6 +612,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         "icon": Icons.design_services_outlined,
         "color": Colors.amberAccent,
         "page": const AdminServicesScreen(),
+      },
+      {
+        "label": "Team Chat",
+        "icon": Icons.chat_bubble_outline,
+        "color": Colors.pinkAccent,
+        "page":  const AdminTeamChatScreen(), // replace with your TeamChatScreen later
+      },
+
+      {
+        "label": "Report Problem",
+        "icon": Icons.bug_report,
+        "color": Colors.redAccent,
+        "page": const AdminReportProblemView(), // replace with your ReportProblemScreen
+      },
+
+      {
+        "label": "Resources",
+        "icon": Icons.devices_other,
+        "color": Colors.cyanAccent,
+        "page": const AdminGadgetResponsibilityScreen(), // replace with your ResourcesScreen
       },
     ];
 
