@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:urban_advertising/widgets/bottom_navbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,7 +13,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-
+  // 🔹 UPCOMING SLOT STATE (NEW)
+  Map<String, dynamic>? upcomingBooking;
+  bool isUpcomingLoading = true;
   final List<Map<String, String>> banners = [
     {
       'image': 'assets/city2.jpg',
@@ -56,6 +60,85 @@ class _HomeScreenState extends State<HomeScreen> {
       'icon': Icons.camera_alt_outlined,
     },
   ];
+// 🔹 FETCH UPCOMING SLOT (ONLY LOGIC)
+  Future<void> fetchUpcomingSlot() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customerId = prefs.getString("uid");
+      final customerName = prefs.getString("customer_name"); // ✅ store this at login
+
+      if (customerId == null && customerName == null) {
+        setState(() => isUpcomingLoading = false);
+        return;
+      }
+
+      List<Map<String, dynamic>> bookings = [];
+
+      // 🔹 1️⃣ ONLINE BOOKINGS (customer_id)
+      if (customerId != null) {
+        final onlineSnap = await FirebaseFirestore.instance
+            .collection("slot_request")
+            .where("customer_id", isEqualTo: customerId)
+            .where("status", whereIn: ["approved", "pending"])
+            .get();
+
+        bookings.addAll(
+          onlineSnap.docs.map((d) => d.data()),
+        );
+      }
+
+      // 🔹 2️⃣ OFFLINE BOOKINGS (customer_name)
+      if (customerName != null) {
+        final offlineSnap = await FirebaseFirestore.instance
+            .collection("slot_request")
+            .where("customer_name", isEqualTo: customerName)
+            .where("status", whereIn: ["approved", "pending"])
+            .get();
+
+        bookings.addAll(
+          offlineSnap.docs.map((d) => d.data()),
+        );
+      }
+
+      if (bookings.isEmpty) {
+        upcomingBooking = null;
+        return;
+      }
+
+      // 🔹 3️⃣ SORT BY ACTUAL BOOKING DATE (NOT created_at)
+      bookings.sort((a, b) {
+        DateTime parseDate(String s) {
+          // "02 Jan 2026"
+          final parts = s.split(" ");
+          final day = int.parse(parts[0]);
+          final month = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+            "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+            "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+          }[parts[1]]!;
+          final year = int.parse(parts[2]);
+          return DateTime(year, month, day);
+        }
+
+        return parseDate(a["date"]).compareTo(parseDate(b["date"]));
+      });
+
+      // 🔹 4️⃣ EARLIEST UPCOMING
+      upcomingBooking = bookings.first;
+
+    } catch (e) {
+      debugPrint("Upcoming slot error: $e");
+    } finally {
+      setState(() => isUpcomingLoading = false);
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUpcomingSlot(); // ✅ ONLY NEW CALL
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -269,60 +352,53 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-// 🌌 Upcoming Slot Section (Dark Theme)
+            // 🌌 UPCOMING SLOT (UPDATED LOGIC, SAME UI)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade800, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: Colors.grey.shade800),
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Container(
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00C885), // neon green background
+                        color: Color(0xFF00C885),
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(10),
-                      child: const Icon(
-                        Icons.calendar_today_outlined,
-                        color: Colors.black,
-                        size: 20,
-                      ),
+                      child: const Icon(Icons.calendar_today_outlined,
+                          color: Colors.black),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          '20 May 2025',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                          isUpcomingLoading
+                              ? "Loading..."
+                              : upcomingBooking == null
+                              ? "No upcoming shoots"
+                              : upcomingBooking!["date"],
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        if (!isUpcomingLoading &&
+                            upcomingBooking != null)
+                          Text(
+                            upcomingBooking!["time"],
+                            style: const TextStyle(color: Colors.white70),
                           ),
-                        ),
-                        Text(
-                          '02:00 PM to 04:00 PM',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
                       ],
                     ),
                   ],
                 ),
               ),
             ),
-
 
             // 🔹 SERVICES SECTION
             const Padding(
@@ -513,4 +589,5 @@ class _HoverServiceCardState extends State<HoverServiceCard> {
     );
   }
 }
+//original code
 
